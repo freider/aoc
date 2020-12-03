@@ -17,5 +17,6 @@ def part2():
 					print(n * m * o)
 
 
-part1()
-part2()
+if __name__ == "__main__":
+	part1()
+	part2()

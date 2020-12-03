@@ -6,17 +6,20 @@ with open("inputs/1") as f:
 	nums = [int(line.strip()) for line in f]
 
 
-def solve(r=2):
-	for tup in itertools.combinations(nums, r):
+def solve(nums, tupsize):
+	for tup in itertools.combinations(nums, tupsize):
 		if sum(tup) == 2020:
 			print(reduce(mul, tup, 1))
 
 
 def part1():
-	solve(2)
+	solve(nums, 2)
+
 
 def part2():
-	solve(3)
+	solve(nums, 3)
 
-part1()
-part2()
+
+if __name__ == "__main__":
+	part1()
+	part2()
