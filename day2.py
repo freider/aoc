@@ -1,25 +1,24 @@
-from collections import Counter
+import re
+
+from lib.input import aoc_input
 
 
-def read():
-    with open("inputs/2") as f:
-        for line in f:
-            p1, pw = line.strip().split(":")
-            q1, c = p1.split(" ")
-            low, high = [int(x) for x in q1.split("-")]
-            yield low, high, c, pw
+def data():
+    for line in aoc_input().split('\n'):
+        parts = re.split(r"[\s:\-]+", line.strip())
+        low, high, c, pw = parts
+        yield int(low), int(high), c, pw
 
 
 def part1():
-    print(sum(1 if low <= Counter(pw).get(c, 0) <= high else 0 for low, high, c, pw in read()))
+    print(sum(1 if low <= pw.count(c) <= high else 0 for low, high, c, pw in data()))
 
 
 def part2():
     def valid(low, high, c, pw):
-        # indexing works without 1/0 indexing adjustment because there is a leading space in pw from parsing
-        return Counter([pw[low], pw[high]]).get(c, 0) == 1
+        return (pw[low - 1] + pw[high - 1]).count(c) == 1
 
-    print(sum(1 if valid(*t) else 0 for t in read()))
+    print(sum(1 if valid(*t) else 0 for t in data()))
 
 if __name__ == "__main__":
     part1()

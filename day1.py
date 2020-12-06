@@ -1,5 +1,6 @@
-with open("inputs/1") as f:
-	nums = [int(line.strip()) for line in f]
+from lib.input import aoc_input
+
+nums = [int(line.strip()) for line in aoc_input().split("\n")]
 
 
 def part1():
