@@ -16,19 +16,9 @@ def part2():
     groups = aoc_input().strip().split('\n\n')
 
     def e(g):
-        s = None
-        for p in g.split('\n'):
-            u = set(p)
-            if s is None:
-                s = u
-            else:
-                s &= u
-        return s
+        return set.intersection(*[set(p) for p in g.split('\n')])
 
     print(sum(len(e(g)) for g in groups))
-
-
-
 
 
 if __name__ == "__main__":
