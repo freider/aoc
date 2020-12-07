@@ -1,50 +1,38 @@
-import sys
 import re
-import numpy as np
-from functools import reduce
-from operator import mul
-from lib.draw import draw, sparse_to_array
-from lib.input import aoc_input, np_map, pb_input
-from networkx import DiGraph, all_shortest_paths, descendants
+import networkx as nx
+from lib.input import aoc_input
 
 
 def part1():
     lines = aoc_input().strip().split('\n')
 
-    g = DiGraph()
+    g = nx.DiGraph()
     for l in lines:
-        p1, p2 = l.split(" contain ")
-        outer = p1.strip()[:-1]
-        if "no other bags" in p2:
+        if "contain no other" in l:
             continue
-        for s in p2.split(", "):
-            _num, inner = s.split(" ", 1)
-            num = int(_num)
-            inner = inner.strip(".")
-            if inner.endswith("s"):
-                inner = inner[:-1]
+        ms = list(re.finditer(r"(\d+)? ?([^\d]+?) bag", l))
+        outer = ms[0].group(2)
+        for m in ms[1:]:
+            inner = m.group(2)
             g.add_edge(inner, outer)
-    d = descendants(g, source="shiny gold bag")
+
+    d = nx.descendants(g, source="shiny gold")
     print(len(d))
 
 
 def part2():
     lines = aoc_input().strip().split('\n')
 
-    g = {}
+    g = nx.DiGraph()
     for l in lines:
-        p1, p2 = l.split(" contain ")
-        outer = p1.strip()[:-1]
-        for s in p2.split(", "):
-            if "no other bags" in p2:
-                continue
-            _num, inner = s.split(" ", 1)
-            num = int(_num)
-            inner = inner.strip(".")
-            if inner.endswith("s"):
-                inner = inner[:-1]
-
-            g.setdefault(outer, []).append((num, inner))
+        if "contain no other" in l:
+            continue
+        ms = list(re.finditer(r"(\d+)? ?([^\d]+?) bag", l))
+        outer = ms[0].group(2)
+        for m in ms[1:]:
+            num = int(m.group(1))
+            inner = m.group(2)
+            g.add_edge(outer, inner, num=num)
 
     vis = {}
 
@@ -52,13 +40,11 @@ def part2():
         if cur in vis:
             return vis[cur]
 
-        s = 1
-        for (num, e) in g.get(cur, []):
-            s += num * rec(e)
+        s = 1 + sum(data["num"] * rec(e) for e, data in g[cur].items())
         vis[cur] = s
         return s
 
-    print(rec("shiny gold bag") - 1)
+    print(rec("shiny gold") - 1)
 
 
 if __name__ == "__main__":
