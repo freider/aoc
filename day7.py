@@ -13,19 +13,19 @@ def part1():
 
     g = DiGraph()
     for l in lines:
-        p1, p2 = l.split("contain")
-        c = p1.strip()[:-1]
+        p1, p2 = l.split(" contain ")
+        outer = p1.strip()[:-1]
+        if "no other bags" in p2:
+            continue
         for s in p2.split(", "):
-            if not "no other bags" in s:
-                num, kind = s.strip().split(" ", 1)
-                num = int(num.strip())
-                kind = kind.strip(".")
-                if kind.endswith("s"):
-                    kind = kind[:-1]
-
-                g.add_edge(kind, c)
-
+            _num, inner = s.split(" ", 1)
+            num = int(_num)
+            inner = inner.strip(".")
+            if inner.endswith("s"):
+                inner = inner[:-1]
+            g.add_edge(inner, outer)
     d = descendants(g, source="shiny gold bag")
+    print(len(d))
 
 
 def part2():
@@ -33,22 +33,22 @@ def part2():
 
     g = {}
     for l in lines:
-        p1, p2 = l.split("contain")
-        c = p1.strip()[:-1]
+        p1, p2 = l.split(" contain ")
+        outer = p1.strip()[:-1]
         for s in p2.split(", "):
-            if not "no other bags" in s:
-                num, kind = s.strip().split(" ", 1)
-                num = int(num.strip())
-                kind = kind.strip(".")
-                if kind.endswith("s"):
-                    kind = kind[:-1]
+            if "no other bags" in p2:
+                continue
+            _num, inner = s.split(" ", 1)
+            num = int(_num)
+            inner = inner.strip(".")
+            if inner.endswith("s"):
+                inner = inner[:-1]
 
-                g.setdefault(c, []).append((num, kind))
+            g.setdefault(outer, []).append((num, inner))
 
     vis = {}
 
     def rec(cur):
-        print("visiting", cur)
         if cur in vis:
             return vis[cur]
 
