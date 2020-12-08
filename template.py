@@ -1,6 +1,7 @@
 import sys
 import re
 import numpy as np
+import networkx as nx
 from functools import reduce
 from operator import mul
 from lib.draw import draw, sparse_to_array
