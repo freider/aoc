@@ -1,10 +1,6 @@
-import sys
-import re
-import numpy as np
-from functools import reduce
-from operator import mul
-from lib.draw import draw, sparse_to_array
-from lib.input import aoc_input, np_map, pb_input
+from collections import Counter
+
+from lib.input import aoc_input
 
 
 def part1():
