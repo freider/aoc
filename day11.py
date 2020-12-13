@@ -1,19 +1,11 @@
-from itertools import count
-
 import itertools
-
-import sys
-import re
 import numpy as np
-from functools import reduce
-from operator import mul
+from itertools import count
+from scipy.ndimage import convolve, correlate
 
-from scipy.ndimage import convolve
+from lib.input import aoc_input, np_map
 
-from lib.draw import draw, sparse_to_array
-from lib.input import aoc_input, np_map, pb_input
-
-dirs = [np.array(x) for x in set(itertools.product([-1, 0, 1], [-1, 0, 1])) - {(0, 0)}]
+dirs = np.array(list(set(itertools.product([-1, 0, 1], [-1, 0, 1])) - {(0, 0)}))
 
 
 def one_iter(m):
@@ -35,10 +27,40 @@ def one_iter(m):
     return out
 
 
+def one_iter_numpy_pix(m):
+    out = np.empty_like(m, dtype=str)
+    for (y, x), v in np.ndenumerate(m):
+        pos = (y, x) + dirs
+        adj_pix = pos[((pos < m.shape) & (pos >= 0)).all(axis=1)].T
+        ocount = (m[adj_pix[0], adj_pix[1]] == "#").sum()
+
+        if v == "#" and ocount >= 4:
+            out[y, x] = "L"
+        elif v == "L" and ocount == 0:
+            out[y, x] = "#"
+        else:
+            out[y, x] = v
+    return out
+
+
+def one_iter_numpy(m: np.array):
+    adj_taken = correlate(
+        (m == "#") * 1,
+        [[1, 1, 1],
+         [1, 0, 1],
+         [1, 1, 1]],
+        mode='constant'
+    )
+    res = m.copy()
+    res[(m == "L") & (adj_taken == 0)] = "#"
+    res[(m == "#") & (adj_taken >= 4)] = "L"
+    return res
+
+
 def part1():
     m = np_map(aoc_input().strip())
     while 1:
-        out = one_iter(m)
+        out = one_iter_numpy(m)
         if (m == out).all():
             break
         m = out
@@ -85,4 +107,4 @@ def part2():
 
 if __name__ == "__main__":
     print(part1())
-    print(part2())
+    # print(part2())
