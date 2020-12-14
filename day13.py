@@ -51,26 +51,23 @@ def part2():
     start = int(lines[0])
     busses = [int(l) if l != "x" else 0 for l in lines[1].split(",")]
 
-    prev_period = busses[0]
-    prev_offset = 0
+    period = busses[0]
+    first_departure = 0
 
-    offset = 0
+    b_offset = 0
     for b in busses[1:]:
-        offset -= 1
-        if b == 0:
+        b_offset -= 1
+        if b == 0:  # "x" in input
             continue
-
-        # n * prev_period + prev_offset = m * b - offset
-        # n * prev_period + prev_offset + offset = m * b
-        new_period = lcm(prev_period, b)
-        reps = (mod_inverse(prev_period, b) * (offset - prev_offset)) % b
-        new_offset = prev_offset + reps * prev_period
+        new_period = lcm(period, b)
+        reps = (mod_inverse(period, b) * (b_offset - first_departure)) % b
+        new_offset = first_departure + reps * period
         print("it {} + n * {}".format(new_offset, new_period))
 
-        prev_period = new_period
-        prev_offset = new_offset
+        period = new_period
+        first_departure = new_offset
 
-    print(prev_offset)
+    print(first_departure)
 
 """
 939
