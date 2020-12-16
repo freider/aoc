@@ -12,9 +12,9 @@ class Aoc:
             session_id = env_session()
         self.session_id = session_id
 
-    def fetch_input_for_day(self, day):
-        return requests.get(f"https://adventofcode.com/2020/day/{day}/input", cookies={"session": self.session_id}).text
+    def fetch_input(self, year, day):
+        return requests.get(f"https://adventofcode.com/{year}/day/{day}/input", cookies={"session": self.session_id}).text
 
 
 if __name__ == "__main__":
-    print(Aoc().fetch_input_for_day(4))
+    print(Aoc().fetch_input(2018, 15))
