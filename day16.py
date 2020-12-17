@@ -81,7 +81,6 @@ def part2():
         return [int(x) for x in t.split(",")]
 
     all_t = [pt(x) for x in other_t + [my_t]]
-    print(all_t)
     rulenums = list(range(len(rules)))
 
     ri_match = defaultdict(list)
