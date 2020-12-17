@@ -47,13 +47,9 @@ def part1():
 def part2():
     N = 6
     lines = aoc_input().strip().split('\n')
-    offset = N
     dim = len(lines) + 2 * N
     cube = np.zeros((dim, dim, dim, dim), dtype=int)
-    for j, l in enumerate(lines):
-        for i, c in enumerate(l.strip()):
-            if c == "#":
-                cube[offset, offset, offset + j, offset + i] = 1
+    cube[N, N] = np.pad(np.array([[1 if c == "#" else 0 for c in l] for l in lines]), N)
 
     weights = np.ones((3, 3, 3, 3))
     weights[1, 1, 1, 1] = 0
@@ -61,13 +57,9 @@ def part2():
         neighbours = ndimage.convolve(
             cube, weights, mode="constant"
         )
-
-        for (a, b, c, d), v in np.ndenumerate(cube):
-            if v == 1:
-                if not 2 <= neighbours[a, b, c, d] <= 3:
-                    cube[a, b, c, d] = 0
-            elif neighbours[a, b, c, d] == 3:
-                cube[a, b, c, d] = 1
+        oldcube = np.copy(cube)
+        cube[(oldcube == 1) & ((neighbours < 2) | (neighbours > 3))] = 0
+        cube[(oldcube == 0) & (neighbours == 3)] = 1
 
     print(cube.sum())
 
