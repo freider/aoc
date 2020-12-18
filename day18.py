@@ -24,6 +24,7 @@ def next_expr(toks):
         assert isinstance(toks[0], int)
         return toks[0], toks[1:]
 
+
 def ev(toks):
     tot, remaining = next_expr(toks)
     while remaining:
@@ -39,6 +40,39 @@ def ev(toks):
 
     return tot
 
+
+def next_expr2(toks):
+    if toks[0] == "(":
+        toks = toks[1:]
+        cnt = 1
+        for i, t in enumerate(toks):
+            if t == "(":
+                cnt += 1
+            elif t == ")":
+                cnt -= 1
+            if cnt == 0:
+                return ev2(toks[:i]), toks[i+1:]
+    else:
+        assert isinstance(toks[0], int)
+        return toks[0], toks[1:]
+
+
+def ev2(toks):
+    tot, remaining = next_expr2(toks)
+    stack = [tot]
+    while remaining:
+        op = remaining[0]
+        remaining = remaining[1:]
+        if op == "*":
+            v, remaining = next_expr2(remaining)
+            stack.append(v)
+        elif op == "+":
+            v, remaining = next_expr2(remaining)
+            stack[-1] += v
+
+    return reduce(lambda a, b: a * b, stack, 1)
+
+
 def part1():
     lines = aoc_input().strip().split('\n')
     s = 0
@@ -49,11 +83,14 @@ def part1():
     print(s)
 
 
-
-
 def part2():
     lines = aoc_input().strip().split('\n')
-
+    s = 0
+    for line in lines:
+        clean = line.replace(" ", "")
+        toks = [int(c) if c.isdigit() else c for c in clean]
+        s += ev2(toks)
+    print(s)
 
 
 if __name__ == "__main__":
