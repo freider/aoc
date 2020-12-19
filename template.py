@@ -5,6 +5,7 @@ import networkx as nx
 from functools import reduce
 from operator import mul
 from lib.draw import draw, sparse_to_array
+import pyparsing as pp
 from lib.input import aoc_input, np_map, pb_input
 
 

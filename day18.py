@@ -93,6 +93,42 @@ def part2():
     print(s)
 
 
+import pyparsing as pp
+
+
+def part1_pp():
+    def calc(terms):
+        val = terms[0]
+        for i in range(1, len(terms), 2):
+            op = terms[i]
+            if op == "+":
+                val += terms[i+1]
+            else:
+                val *= terms[i+1]
+        return val
+
+    o = pp.infixNotation(pp.pyparsing_common.integer, [
+        (pp.oneOf("+ *"), 2, pp.opAssoc.LEFT, lambda toks: calc(toks[0])),
+    ])
+    print(sum(o.parseString(l)[0] for l in aoc_input().strip().split('\n')))
+
+
+def part2_pp():
+    mult = lambda l: reduce(lambda a, b: a * b, l, 1)  # multiply a list
+    o = pp.infixNotation(pp.pyparsing_common.integer, [
+        (pp.Suppress("+"), 2, pp.opAssoc.LEFT, lambda tok: sum(tok[0])),
+        (pp.Suppress("*"), 2, pp.opAssoc.LEFT, lambda tok: mult(tok[0]))
+    ])
+    print(sum(o.parseString(l)[0] for l in aoc_input().strip().split('\n')))
+
+
 if __name__ == "__main__":
-    part1()
-    part2()
+    # part1()
+    # part1_pp()
+    # part2()
+    # part2_pp()
+
+    o = pp.infixNotation(pp.pyparsing_common.integer, [
+        (pp.oneOf("+ *"), 2, pp.opAssoc.LEFT),
+    ])
+    o.parseString("5 + 2 * 3 + 1 + 2").pprint()
