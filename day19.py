@@ -48,33 +48,13 @@ def part2():
     d = {}
     for l in rules.split('\n'):
         i, mpart = l.split(": ")
+        if i == "8":
+            mpart = "42 | 42 8"
+        elif i == "11":
+            mpart = "42 31 | 42 11 31"
         d[i] = [case.split() for case in mpart.split(" | ")]
 
-    def match_n(i, s):
-        for l in matches(i, s):
-            yield 1, l
-            for num, n in match_n(i, s[l:]):
-                yield num + 1, l + n
-
-    def match_8(s):
-        for _, l in match_n("42", s):
-            yield l
-
-    def match_11(s):
-        for num, l in match_n("42", s):
-            for num2, l2 in match_n("31", s[l:]):
-                if num == num2:
-                    yield l + l2
-
     def matches(i, s):
-        if i == "8":
-            yield from match_8(s)
-            return
-
-        if i == "11":
-            yield from match_11(s)
-            return
-
         if '"' in i:
             m = i.strip('"')
             if s.startswith(m):
@@ -98,7 +78,6 @@ def part2():
         ans += any(x == len(line) for x in matches('0', line))
     print(ans)
 
-
 if __name__ == "__main__":
-    #part1()
+    part1()
     part2()
