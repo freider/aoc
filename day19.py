@@ -78,6 +78,7 @@ def part2():
         ans += any(x == len(line) for x in matches('0', line))
     print(ans)
 
+    
 if __name__ == "__main__":
     part1()
     part2()
