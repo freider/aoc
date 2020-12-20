@@ -78,13 +78,13 @@ def both():
         prev = newt
 
     # construct image
-    tileheight, tilewidth = tiles[next(iter(tiles.keys()))].shape
-    th = tileheight - 2
-    tw = tilewidth - 2
-    img = np.zeros((len(full) * th, len(full[0]) * tw), dtype=int)
-    for ty, row in enumerate(full):
-        for tx, tile in enumerate(row):
-            img[ty*th: (ty+1)*th, tx*tw: (tx+1)*tw] = tile[1:-1, 1:-1]
+    img = np.concatenate(
+        [np.concatenate(
+            [part[1:-1, 1:-1] for part in row],
+            axis=1,
+        ) for row in full],
+        axis=0
+    )
 
     pattern = """                  # 
 #    ##    ##    ###
