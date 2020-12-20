@@ -1,17 +1,10 @@
-from collections import defaultdict, namedtuple, Counter
-
-import sys
-import re
-import numpy as np
-import networkx as nx
+from collections import defaultdict, namedtuple
 from functools import reduce
-from operator import mul
 
+import numpy as np
 from scipy.ndimage import correlate
 
-from lib.draw import draw, sparse_to_array
-import pyparsing as pp
-from lib.input import aoc_input, np_map, pb_input
+from lib.input import aoc_input
 
 transform = namedtuple("transform", "trans flipx flipy")
 transforms = []
@@ -30,6 +23,7 @@ def dotrans(t, trans):
         tt = tt[::,::-1]
     return tt
 
+
 def both():
     lines = aoc_input().strip()
     raw = lines.split("\n\n")
@@ -40,51 +34,50 @@ def both():
         tile = np.array([[1 if c == "#" else 0 for c in l] for l in lines[1:]], dtype=int)
         tiles[id] = tile
 
-    alt = defaultdict(set)
+    alt = defaultdict(list)
+    alt_tids = defaultdict(set)
     for tid, t in tiles.items():
         for trans in transforms:
             tt = dotrans(t, trans)
-            alt[tuple(tt[0,::])].add((tid, trans))
+            alt[tuple(tt[0,::])].append((tid, tt))
+            alt_tids[tuple(tt[0,::])].add(tid)
 
-    uniq = defaultdict(int)
-    for e, comb in alt.items():
-        tids = set(x[0] for x in comb)
-        if len(tids) == 1:
-            uniq[next(iter(tids))] += 1
+    upper_left_id = None
+    upper_left = None
+    corners = set()
+    for tid, t in tiles.items():
+        for trans in transforms:
+            variant = dotrans(t, trans)
+            top = variant[0, ::]
+            left = variant[::, 0]
+            if len(alt_tids[tuple(top)]) == 1 and len(alt_tids[tuple(left)]) == 1:
+                corners.add(tid)
+                upper_left_id = tid
+                upper_left = variant
 
-    #print(uniq)
-    m = 1
-    corners = []
-    for u, l in uniq.items():
-        if l == 4:
-            corners.append(u)
-            m *= u
-    print(reduce(lambda a, b: a*b, corners, 1))
+    print(reduce(lambda a, b: a*b, corners))  # part 1
 
-    # construct full image
-    starting_corner = corners[0]
-    used = {starting_corner}
-    prev = tiles[starting_corner][::-1,::]  # hack: hardcoded upside down tile based on corner orientation of starting corner
+    # find layout
+    used = {upper_left_id}
+    prev = upper_left
     full = [[prev]]
 
     for it in range(len(tiles) - 1):
         right = prev[::,-1]
-        opts = [(tid, trans) for tid, trans in alt[tuple(right)] if tid not in used]
-        if opts:
-            n = opts[0]
-            newt = dotrans(tiles[n[0]], n[1]).T
+        try:
+            newi, newt = next((tid, tt) for tid, tt in alt[tuple(right)] if tid not in used)
+            # add on right
+            newt = newt.T  # alt is indexed by top rows, so transpose to get "left" version
             full[-1].append(newt)
-        else:
-            bottom = full[-1][0][-1,::]  # first of last row
-            opts = [(tid, trans) for tid, trans in alt[tuple(bottom)] if tid not in used]
-            n = opts[0]
-            newt = dotrans(tiles[n[0]], n[1])
+        except StopIteration:  # no match on right side, find start of next row instead
+            bottom = full[-1][0][-1,::]
+            newi, newt = next((tid, tt) for tid, tt in alt[tuple(bottom)] if tid not in used)
             full.append([newt])
 
-        newi = n[0]
         used.add(newi)
         prev = newt
 
+    # construct image
     tileheight, tilewidth = tiles[next(iter(tiles.keys()))].shape
     th = tileheight - 2
     tw = tilewidth - 2
@@ -103,16 +96,8 @@ def both():
         if matching_pixels.sum():
             break
 
-    # Reactivate the following if snakes can overlap (which they can't in the input)
-    # px = set()
-    # for (y, x), v in np.ndenumerate(matching_pixels):
-    #     for (sy, sx), vv in np.ndenumerate(s):
-    #         if v == 1 and vv == 1:
-    #             p = (y + sy, x + sx)
-    #             px.add(p)
+    print(img.sum() - matching_pixels.sum() * snake.sum())  #part 2
 
-    print(img.sum() - matching_pixels.sum() * snake.sum())
-    #print(len(px))
 
 
 if __name__ == "__main__":
