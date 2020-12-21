@@ -39,7 +39,7 @@ def both():
     for tid, t in tiles.items():
         for trans in transforms:
             tt = dotrans(t, trans)
-            alt[tuple(tt[0,::])].append((tid, tt))
+            alt[tuple(tt[0,::])].append((tid, tt))  # used for p2
             alt_tids[tuple(tt[0,::])].add(tid)
 
     upper_left_id = None
