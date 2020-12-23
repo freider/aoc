@@ -7,24 +7,37 @@ import sys
 class Graph:
     def __init__(self):
         self.edges = {}
+        self.name_id_map = {}
+        self.id_name_map = {}
+
+    def _name_to_id(self, name):
+        id = self.name_id_map.setdefault(name, len(self.name_id_map))
+        self.id_name_map[id] = name
+        return id
+
+    def _id_to_name(self, id):
+        return self.id_name_map[id]
 
     def add_edge(self, v1, v2, **data):
-        self.edges.setdefault(v1, {})[v2] = data
+        self.edges.setdefault(self._name_to_id(v1), {})[self._name_to_id(v2)] = data
 
     def copy(self):
         g = Graph()
         g.edges = deepcopy(self.edges)
+        g.name_id_map = deepcopy(self.name_id_map)
         return g
 
 
 def maximum_flow(g, source, sink):
+    source_id = g._name_to_id(source)
+    sink_id = g._name_to_id(sink)
     flow_g = g.copy()
     inf = 1 << 32
 
     def find_sink():
         q = []
         best = {}
-        heapq.heappush(q, (-inf, source, []))
+        heapq.heappush(q, (-inf, source_id, []))
         while q:
             invcap, cur, path = heapq.heappop(q)
             cap = -invcap
@@ -32,7 +45,7 @@ def maximum_flow(g, source, sink):
             if cap < b:
                 continue
             best[cur] = inf  # set to high to prevent further paths from being expanded
-            if cur == sink:
+            if cur == sink_id:
                 return reversed(path), cap
 
             path_here = path + [cur]
@@ -57,8 +70,7 @@ def maximum_flow(g, source, sink):
         path, flow = find_sink()
         if flow == 0:
             break
-        if flow == inf:
-            return inf
+
         path = list(path)
         tot_flow += flow
         # add flow and residuals
@@ -70,12 +82,16 @@ def maximum_flow(g, source, sink):
             rev_data["flow"] = rev_data.get("flow", 0) - flow
             v2 = v1
 
+        if flow == inf:
+            tot_flow = inf
+            break
+
     flows = []
     for u, vs in flow_g.edges.items():
         for v, data in vs.items():
             f = data.get("flow", 0)
             if f > 0:
-                flows.append((u, v, f))
+                flows.append((g._id_to_name(u), g._id_to_name(v), f))
 
     return tot_flow, flows
 
@@ -88,7 +104,8 @@ while lines:
         u, v, c = [int(x) for x in e.split(" ")]
         g.add_edge(u, v, capacity=c)
 
-    f, uvs = maximum_flow(g, s, t)
+    tmp = maximum_flow(g, s, t)
+    f, uvs = tmp
     print(n, f, len(uvs))
     for u, v, f in uvs:
         print(u, v, f)
