@@ -37,18 +37,20 @@ def maximum_flow(g, source, sink):
     def find_sink():
         q = []
         best = {}
-        heapq.heappush(q, (-inf, source_id, []))
+        parent = [None] * len(g.name_id_map)
+        heapq.heappush(q, (-inf, source_id, None))
         while q:
-            invcap, cur, path = heapq.heappop(q)
+            invcap, cur, parent_v = heapq.heappop(q)
             cap = -invcap
             b = best.get(cur, 0)
             if cap < b:
                 continue
             best[cur] = inf  # set to high to prevent further paths from being expanded
+            assert parent[cur] is None
+            parent[cur] = parent_v
             if cur == sink_id:
-                return reversed(path), cap
+                return parent, cap
 
-            path_here = path + [cur]
             for next, data in flow_g.edges.get(cur, {}).items():
                 e_flow = data.get("flow", 0)
                 e_cap = data.get("capacity", inf)
@@ -61,26 +63,27 @@ def maximum_flow(g, source, sink):
                         heapq.heappush(q, (
                             -next_flow,
                             next,
-                            path_here
+                            cur
                         ))
         return None, 0
 
     tot_flow = 0
     while True:
-        path, flow = find_sink()
+        parent, flow = find_sink()
         if flow == 0:
             break
 
-        path = list(path)
         tot_flow += flow
         # add flow and residuals
-        v2 = sink
-        for v1 in path:
+        v2 = sink_id
+        v1 = parent[sink_id]
+        while v1 is not None:
             data = flow_g.edges[v1][v2]
             data["flow"] = data.get("flow", 0) + flow
             rev_data = flow_g.edges.setdefault(v2, {}).setdefault(v1, {"capacity": 0})
             rev_data["flow"] = rev_data.get("flow", 0) - flow
             v2 = v1
+            v1 = parent[v1]
 
         if flow == inf:
             tot_flow = inf
