@@ -52,7 +52,6 @@ def part2():
                     return ans
 
     ans = do(0, {})
-    print(ans)
     print(",".join(y[0] for y in sorted(ans.items(), key=lambda x: x[1])))
 
 
