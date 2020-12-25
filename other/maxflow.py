@@ -1,4 +1,5 @@
 import heapq
+from collections import deque
 from copy import deepcopy
 
 import sys
@@ -99,17 +100,16 @@ def maximum_flow(g, source, sink):
     return tot_flow, flows
 
 
-lines = [l.strip() for l in sys.stdin.readlines()]
-while lines:
-    n, m, s, t = [int(x) for x in lines[0].split(" ")]
-    g = Graph()
-    for e in lines[1:1+m]:
-        u, v, c = [int(x) for x in e.split(" ")]
-        g.add_edge(u, v, capacity=c)
+lines = (l.strip() for l in sys.stdin.readlines())
 
-    tmp = maximum_flow(g, s, t)
-    f, uvs = tmp
-    print(n, f, len(uvs))
-    for u, v, f in uvs:
-        print(u, v, f)
-    lines = lines[1+m:]
+n, m, s, t = [int(x) for x in next(lines).split(" ")]
+g = Graph()
+for _ in range(m):
+    u, v, c = [int(x) for x in next(lines).split(" ")]
+    g.add_edge(u, v, capacity=c)
+
+tmp = maximum_flow(g, s, t)
+f, uvs = tmp
+print(n, f, len(uvs))
+for u, v, f in uvs:
+    print(u, v, f)
