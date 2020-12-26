@@ -4,6 +4,8 @@ from copy import deepcopy
 
 import sys
 
+inf = 1 << 63
+
 
 class Graph:
     def __init__(self):
@@ -29,43 +31,51 @@ class Graph:
         return g
 
 
-def maximum_flow(g, source, sink):
-    source_id = g._name_to_id(source)
-    sink_id = g._name_to_id(sink)
-    flow_g = g.copy()
-    inf = 1 << 32
+class CompactGraph:
+    def __init__(self, size):
+        self.size = size
+        self.cap = [[0] * size for _ in range(size)]
+        self.edges = [set() for _ in range(size)]
+
+    def add_edge(self, v1, v2, cap=inf):
+        # assert v1 not in self.edges[v2]
+        self.edges[v1].add(v2)
+        self.edges[v2].add(v1)
+        self.cap[v1][v2] += cap
+
+
+def maximum_flow_ford_fulkerson(g, source_id, sink_id):
+    flows = [[0] * g.size for _ in range(g.size)]
 
     def find_sink():
         q = []
-        best = {}
-        parent = [None] * len(g.name_id_map)
+        best = [0] * g.size
+        parent = [None] * g.size
         heapq.heappush(q, (-inf, source_id, None))
         while q:
-            invcap, cur, parent_v = heapq.heappop(q)
-            cap = -invcap
-            b = best.get(cur, 0)
-            if cap < b:
+            invflowhere, cur, parent_v = heapq.heappop(q)
+            if parent[cur] is not None:
                 continue
-            best[cur] = inf  # set to high to prevent further paths from being expanded
-            assert parent[cur] is None
             parent[cur] = parent_v
+            best[cur] = inf  # set high to prevent further equal paths from being added
+            flow_here = -invflowhere
             if cur == sink_id:
-                return parent, cap
+                return parent, flow_here
 
-            for next, data in flow_g.edges.get(cur, {}).items():
-                e_flow = data.get("flow", 0)
-                e_cap = data.get("capacity", inf)
+            for next in g.edges[cur]:
+                e_flow = flows[cur][next]
+                e_cap = g.cap[cur][next]
                 free_cap = e_cap - e_flow
-                next_flow = min(cap, free_cap)
-                best_so_far = best.get(next, 0)
-                if next_flow > best_so_far:
+                next_flow = min(flow_here, free_cap)
+
+                if next_flow > best[next]:
                     best[next] = next_flow
-                    if next_flow > 0:
-                        heapq.heappush(q, (
-                            -next_flow,
-                            next,
-                            cur
-                        ))
+                    heapq.heappush(q, (
+                        -next_flow,
+                        next,
+                        cur
+                    ))
+
         return None, 0
 
     tot_flow = 0
@@ -78,35 +88,88 @@ def maximum_flow(g, source, sink):
         # add flow and residuals
         v2 = sink_id
         v1 = parent[sink_id]
-        while v1 is not None:
-            data = flow_g.edges[v1][v2]
-            data["flow"] = data.get("flow", 0) + flow
-            rev_data = flow_g.edges.setdefault(v2, {}).setdefault(v1, {"capacity": 0})
-            rev_data["flow"] = rev_data.get("flow", 0) - flow
+        while v2 != source_id:
+            flows[v1][v2] += flow
+            flows[v2][v1] -= flow
             v2 = v1
             v1 = parent[v1]
+        assert v1 is None
 
         if flow == inf:
             tot_flow = inf
             break
 
-    flows = []
-    for u, vs in flow_g.edges.items():
-        for v, data in vs.items():
-            f = data.get("flow", 0)
-            if f > 0:
-                flows.append((g._id_to_name(u), g._id_to_name(v), f))
+    pos_flows = []
+    for u, vs in enumerate(g.edges):
+        for v in vs:
+            if flows[u][v] > 0:
+                pos_flows.append((u, v, flows[u][v]))
 
-    return tot_flow, flows
+    return tot_flow, pos_flows
+
+
+def maximum_flow(g, source_id, sink_id):
+    flow = [[0] * g.size for _ in range(g.size)]
+
+    def find_sink():
+        levels = [-1] * g.size
+        q = deque([(source_id)])
+        levels[source_id] = 0
+
+        while q:
+            u = q.popleft()
+            next_level = levels[u] + 1
+            for v in g.edges[u]:
+                if levels[v] == -1 and g.cap[u][v] > flow[u][v]:
+                    levels[v] = next_level
+                    q.append(v)
+
+        return levels
+
+    def send_flow(u, amount, levels):
+        if u == sink_id:
+            return amount
+        tot_sent = 0
+        for v in g.edges[u]:
+            if levels[v] == levels[u] + 1:
+                res = min(amount, g.cap[u][v] - flow[u][v])
+                sent = send_flow(v, res, levels)
+                amount -= sent
+                tot_sent += sent
+                flow[u][v] += sent
+                flow[v][u] -= sent
+        return tot_sent
+
+    tot = 0
+    while True:
+        levels = find_sink()
+        if levels[sink_id] == -1:
+            break
+        while True:
+            sent = send_flow(source_id, inf, levels)
+
+            if sent == 0:
+                break
+
+            tot += sent
+
+
+    uvs = []
+    for u in range(g.size):
+        for v in g.edges[u]:
+            if flow[u][v] > 0:
+                uvs.append((u, v, flow[u][v]))
+
+    return tot, uvs
 
 
 lines = (l.strip() for l in sys.stdin.readlines())
 
 n, m, s, t = [int(x) for x in next(lines).split(" ")]
-g = Graph()
+g = CompactGraph(n)
 for _ in range(m):
     u, v, c = [int(x) for x in next(lines).split(" ")]
-    g.add_edge(u, v, capacity=c)
+    g.add_edge(u, v, cap=c)
 
 tmp = maximum_flow(g, s, t)
 f, uvs = tmp
