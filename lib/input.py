@@ -3,6 +3,7 @@ import re
 import subprocess
 from typing import Union
 import numpy as np
+import pytest
 import sys
 
 from lib.aoc_api import Aoc
@@ -24,24 +25,56 @@ def pb_input():
     return subprocess.check_output('pbpaste', encoding='utf8')
 
 
-def aoc_input(fn: Union[str, int, None] = None, year=None):
+def aoc_input(fn: Union[str, int, None] = None, year=None, nostrip=False):
     script_fn = sys.argv[0]
     input_fn = infer_day(script_fn) if fn is None else fn
     year = infer_year(script_fn) if year is None else year
 
     input_dir = infer_input_dir(script_fn)
     relpath = f"{input_dir}/{input_fn}"
-    if os.path.exists(relpath):
-        with open(relpath) as f:
-            return f.read()
+
+    def filecached():
+        if os.path.exists(relpath):
+            with open(relpath) as f:
+                return f.read()
+        else:
+            if not str(input_fn).isdigit():
+                raise Exception("Can only fetch full day input")
+            day = input_fn
+            txt = Aoc().fetch_input(year, day).strip()
+            with open(relpath, 'w') as f:
+                f.write(txt)
+            return txt
+
+    d = filecached()
+    if nostrip:
+        return d
     else:
-        if not str(input_fn).isdigit():
-            raise Exception("Can only fetch full day input")
-        day = input_fn
-        txt = Aoc().fetch_input(year, day).strip()
-        with open(relpath, 'w') as f:
-            f.write(txt)
-        return txt
+        return d.strip()
+
+
+def ints(s):
+    return [int(x) for x in re.findall(r"[0-9]+", s)]
+
+
+def test__ints():
+    assert ints("hej23#2.5") == [23, 2, 5]
+
+
+def tokens(s, intify=True):
+    raw = re.split(r"[^\w\d]+", s)
+    if intify:
+        return tuple(int(x) if x.isdigit() else x for x in raw)
+    return tuple(raw)
+
+
+@pytest.mark.parametrize(
+    ["s", "expected"], [
+    ("aba: nisse#23", ("aba", "nisse", 23)),
+    ("aba: nisse#23.5", ("aba", "nisse", 23, 5)),
+])
+def test__tokens(s, expected):
+    assert expected == tokens(s)
 
 
 def np_map(txt):
