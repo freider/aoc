@@ -30,6 +30,10 @@ class Point:
                     yield (p,) + sub
         return (Point(*p) for p in rec(0))
 
+    @classmethod
+    def border_range(cls, p1, p2, inclusive=True):
+        p1.v
+
     def __iter__(self):
         yield from self.v
 
@@ -66,14 +70,14 @@ class Point:
         return sum(*(a * b for a, b in zip(self.v, other.v)))
 
     def np(self):
-        return np.array(self.v)
+        return self.v
 
     def __repr__(self):
         d = ", ".join(str(x) for x in self.v)
         return f"Point({d})"
 
     def __hash__(self):
-        return tuple(self.v)
+        return hash(tuple(self.v))
 
     def __getitem__(self, item: int):
         return self.v[item]

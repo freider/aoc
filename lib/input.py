@@ -54,27 +54,40 @@ def aoc_input(fn: Union[str, int, None] = None, year=None, nostrip=False):
 
 
 def ints(s):
-    return [int(x) for x in re.findall(r"[0-9]+", s)]
+    return [int(x) for x in re.findall(r"[+\-]?[0-9]+", s)]
 
+def chunks(s):
+    return s.split("\n\n")
+
+def lines(s):
+    return s.split("\n")
 
 def test__ints():
-    assert ints("hej23#2.5") == [23, 2, 5]
+    assert ints("hej23#-2.5") == [23, -2, 5]
 
 
-def tokens(s, intify=True):
-    raw = re.split(r"[^\w\d]+", s)
+def tokens(s, intify=True, negative=False):
+    pat = r"(\w+|{}\d+)".format('-' if negative else '')
+    raw = re.findall(pat, s)
     if intify:
-        return tuple(int(x) if x.isdigit() else x for x in raw)
+        return tuple(int(x) if (x.isdigit() or (negative and x[0] == '-' and x[1:].isdigit())) else x for x in raw)
     return tuple(raw)
 
 
 @pytest.mark.parametrize(
     ["s", "expected"], [
-    ("aba: nisse#23", ("aba", "nisse", 23)),
-    ("aba: nisse#23.5", ("aba", "nisse", 23, 5)),
-])
+        ("aba: nisse#23", ("aba", "nisse", 23)),
+        ("aba: nisse#23.5", ("aba", "nisse", 23, 5)),
+        ("[foo]", ("foo",)),
+        ("4-2", (4, 2))
+    ]
+)
 def test__tokens(s, expected):
     assert expected == tokens(s)
+
+def test__tokens_negative():
+    assert tokens("4-2") == (4, 2)
+    assert tokens("4-2", negative=True) == (4, -2)
 
 
 def np_map(txt):
