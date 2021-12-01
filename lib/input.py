@@ -25,7 +25,7 @@ def pb_input():
     return subprocess.check_output('pbpaste', encoding='utf8')
 
 
-def aoc_input(fn: Union[str, int, None] = None, year=None, nostrip=False):
+def aoc_input(fn: Union[str, int, None] = None, year=None, nostrip=False) -> object:
     script_fn = sys.argv[0]
     input_fn = infer_day(script_fn) if fn is None else fn
     year = infer_year(script_fn) if year is None else year
@@ -41,7 +41,7 @@ def aoc_input(fn: Union[str, int, None] = None, year=None, nostrip=False):
             if not str(input_fn).isdigit():
                 raise Exception("Can only fetch full day input")
             day = input_fn
-            txt = Aoc().fetch_input(year, day).strip()
+            txt = Aoc().fetch_input(year, day)
             with open(relpath, 'w') as f:
                 f.write(txt)
             return txt
@@ -50,7 +50,7 @@ def aoc_input(fn: Union[str, int, None] = None, year=None, nostrip=False):
     if nostrip:
         return d
     else:
-        return d.strip()
+        return d.rstrip("\n")
 
 
 def ints(s):

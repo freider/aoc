@@ -97,6 +97,9 @@ class Point:
     def __eq__(self, other):
         return self.dim == other.dim and all(a == b for a, b in zip(self.v, other.v))
 
+    def __lt__(self, other):
+        return tuple(self.np()) < tuple(other.np())
+
 
 @pytest.mark.parametrize(
     ["v", "expected"],
