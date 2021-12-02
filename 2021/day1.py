@@ -7,7 +7,7 @@ from operator import mul
 from lib.draw import draw, sparse_to_array
 import pyparsing as pp
 
-from lib.input import aoc_input, np_map, pb_input
+from lib.input import aoc_input, np_map, pb_input, ints
 
 
 def part1():
@@ -15,27 +15,25 @@ def part1():
     last = nums[0]
     s = 0
     for n in nums[1:]:
-    	if n > last:
-    		s += 1
-    	last = n
+        if n > last:
+            s += 1
+        last = n
     print(s)
-
 
 
 def part2():
     nums = [int(x) for x in aoc_input().strip().split('\n')]
     mums = []
     for i in range(len(nums) - 2):
-    	mums.append(sum(nums[i:i+3]))
+        mums.append(sum(nums[i:i + 3]))
 
     last = mums[0]
     s = 0
     for n in mums[1:]:
-    	if n > last:
-    		s += 1
-    	last = n
+        if n > last:
+            s += 1
+        last = n
     print(s)
-
 
 
 if __name__ == "__main__":
