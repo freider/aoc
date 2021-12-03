@@ -1,12 +1,13 @@
-import sys
 import re
-import numpy as np
-import networkx as nx
+import sys
 from functools import reduce
 from operator import mul
-from lib.draw import draw, sparse_to_array
+
+import networkx as nx
+import numpy as np
 import pyparsing as pp
 
+from lib.draw import draw, sparse_to_array
 from lib.input import aoc_input, np_map, pb_input, tokens
 
 
