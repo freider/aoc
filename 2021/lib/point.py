@@ -1,3 +1,4 @@
+import numbers
 from typing import Union
 
 import numpy as np
@@ -17,6 +18,11 @@ class Point:
 
     @classmethod
     def range(cls, p1, p2, inclusive=True):
+        """Yield all points in bounded by the p1 <-> p2 box
+
+        * Works for any number of dimensions of p
+        * p1 needs to be <= p2 for all dimensions for any points to be generated
+        """
         assert p1.dim == p2.dim
         dim = p1.dim
 
@@ -31,13 +37,27 @@ class Point:
         return (Point(*p) for p in rec(0))
 
     @classmethod
-    def border_range(cls, p1, p2, inclusive=True):
-        p1.v
+    def line_points(cls, p1, p2, inclusive=True):
+        """Yield all consecutive points on the vertical, horizontal or diagonal line from p1 to p2
+
+        * "Order" of points doesn't matter
+
+        """
+
+        diff = p2 - p1
+        assert np.any(np.equal(p1.v, p2.v)) or abs(diff[0]) == abs(diff[1]), "Only straight or diagonal supported"
+
+        steps = np.max(np.abs(diff.v))
+        diff = Point(*(diff.v // steps))
+        p = p1
+        for _ in range(steps + int(inclusive)):
+            yield p
+            p += diff
 
     def __iter__(self):
         yield from self.v
 
-    def restrict(self, mincap:Union['Point', None] = None, maxcap:Union['Point', None] = None):
+    def restrict(self, mincap:'Point' = None, maxcap:'Point' = None):
         mincap = mincap or self.dim * [None]
         maxcap = maxcap or self.dim * [None]
 
@@ -51,13 +71,14 @@ class Point:
         return Point(*(minmax(*c) for c in zip(self.v, mincap, maxcap)))
 
     def neighbours(self, mincap=None, maxcap=None):
-        offset = Point(*[1] * self.dim)
+        offset = Point(*([1] * self.dim))
         return Point.range(
             (self - offset).restrict(mincap, maxcap),
             (self + offset).restrict(mincap, maxcap)
         )
 
     def __init__(self, *args):
+        assert isinstance(args[0], numbers.Number)
         self.v = np.array(args, dtype=int)
 
     def __add__(self, other):
@@ -138,3 +159,16 @@ def test__restrict(p, mincap, maxcap, expected):
         Point(*mincap) if mincap else None,
         Point(*maxcap) if maxcap else None
     ) == Point(*expected)
+
+
+@pytest.mark.parametrize(
+    ["p1", "p2", "inclusive", "expected"],
+    [
+        [(0, 0), (0, 3), True, [(0, 0), (0, 1), (0, 2), (0, 3)]],
+        [(3, 0), (0, 0), True, [(3, 0), (2, 0), (1, 0), (0, 0)]],
+        [(-1, 2), (1, 0), False, [(-1, 2), (0, 1)]]
+    ]
+)
+def test__line_points(p1, p2, inclusive, expected):
+    res = Point.line_points(Point(*p1), Point(*p2), inclusive=inclusive)
+    assert [Point(*p) for p in expected] == list(res)
