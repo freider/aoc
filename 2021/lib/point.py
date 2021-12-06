@@ -17,7 +17,7 @@ class Point:
     v: np.array
 
     @classmethod
-    def range(cls, p1, p2, inclusive=True):
+    def box_points(cls, p1, p2, inclusive=True):
         """Yield all points in bounded by the p1 <-> p2 box
 
         * Works for any number of dimensions of p
@@ -40,8 +40,7 @@ class Point:
     def line_points(cls, p1, p2, inclusive=True):
         """Yield all consecutive points on the vertical, horizontal or diagonal line from p1 to p2
 
-        * "Order" of points doesn't matter
-
+        * "Order" of points doesn't matter, i.e. p2 < p1 for any dimensions are fine
         """
 
         diff = p2 - p1
@@ -70,9 +69,13 @@ class Point:
 
         return Point(*(minmax(*c) for c in zip(self.v, mincap, maxcap)))
 
-    def neighbours(self, mincap=None, maxcap=None):
-        offset = Point(*([1] * self.dim))
-        return Point.range(
+    def neighbours(self, mincap=None, maxcap=None, distance=1):
+        """Get all points within offset distance (default 1)
+        * includes the point itself
+        * optionally cap the output by mincap and maxcap
+        """
+        offset = Point(*([distance] * self.dim))
+        return Point.box_points(
             (self - offset).restrict(mincap, maxcap),
             (self + offset).restrict(mincap, maxcap)
         )
@@ -82,13 +85,13 @@ class Point:
         self.v = np.array(args, dtype=int)
 
     def __add__(self, other):
-        return Point(*(a + b for a, b in zip(self.v, other.v)))
+        return Point(*(self.v + other.v))
 
     def __sub__(self, other):
-        return Point(*(a - b for a, b in zip(self.v, other.v)))
+        return Point(*(self.v - other.v))
 
     def dot(self, other):
-        return sum(*(a * b for a, b in zip(self.v, other.v)))
+        return np.dot(self.v, other.v)
 
     def np(self):
         return self.v
@@ -144,7 +147,7 @@ def test__rot90(v, expected):
     ]
 )
 def test__range(a, b, expected):
-    assert list(Point.range(Point(*a), Point(*b))) == [Point(*p) for p in expected]
+    assert list(Point.box_points(Point(*a), Point(*b))) == [Point(*p) for p in expected]
 
 
 @pytest.mark.parametrize(
@@ -172,3 +175,47 @@ def test__restrict(p, mincap, maxcap, expected):
 def test__line_points(p1, p2, inclusive, expected):
     res = Point.line_points(Point(*p1), Point(*p2), inclusive=inclusive)
     assert [Point(*p) for p in expected] == list(res)
+
+
+def test__neighbours():
+    assert list(Point(2, 2).neighbours()) == [
+        Point(y, x) for y, x in [
+            (1, 1), (1, 2), (1, 3),
+            (2, 1), (2, 2), (2, 3),
+            (3, 1), (3, 2), (3, 3)
+        ]
+    ]
+
+    assert list(Point(2, 2).neighbours(maxcap=Point(2, 3))) == [
+        Point(y, x) for y, x in [
+            (1, 1), (1, 2), (1, 3),
+            (2, 1), (2, 2), (2, 3),
+        ]
+    ]
+
+
+@pytest.mark.parametrize(
+    ["p1", "p2", "expected"],
+    [
+        [(1, 3), (2, 7), (3, 10)],
+        [(1, 7, -2), (0, 2, 9), (1, 9, 7)],
+    ]
+)
+def test__add(p1, p2, expected):
+    assert Point(*p1) + Point(*p2) == Point(*expected)
+
+
+def test__fail_on_init_array():
+    try:
+        Point([1, 2])
+    except:
+        pass
+    else:
+        assert False, "did not raise"
+
+    try:
+        Point(np.array([1.0, 2.0]))
+    except:
+        pass
+    else:
+        assert False, "did not raise"
