@@ -13,7 +13,7 @@ mat_rot90 = np.array([
 
 
 class Point:
-    # hashable point type of any dimension
+    # hashable point type of any dimension with integer values only
     v: np.array
 
     @classmethod
