@@ -17,13 +17,7 @@ def part1():
     src = aoc_input()
     #src = """16,1,2,0,4,2,7,1,2,14"""
     n = np.array(ints(src))
-    j, mj = None, 10000000
-    for i in range(max(n)):
-        s = np.abs((n - i)).sum()
-        if s < mj:
-            j, mj = i, s
-
-    print(mj)
+    print(np.abs(n - np.median(n)).sum())
 
 
 def part2():
@@ -31,12 +25,11 @@ def part2():
     #src = """16,1,2,0,4,2,7,1,2,14"""
     n = np.array(ints(src))
 
-    j, mj = None, 10000000000
+    mj = 10000000000
+
     for i in range(max(n)):
-        a = np.abs((n - i))
-        s = (a * (a + 1) // 2).sum()
-        if s < mj:
-            j, mj = i, s
+        a = np.abs(n - i)
+        mj = min(mj, (a * (a + 1) // 2).sum())
 
     print(mj)
 
