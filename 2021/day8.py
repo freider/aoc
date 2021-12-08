@@ -15,54 +15,30 @@ from lib.point import Point
 
 
 def part1():
-    src = """be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
-edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc
-fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg
-fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega | efabcd cedba gadfec cb
-aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga | gecf egdcabf bgf bfgea
-fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf | gebdcfa ecba ca fadegcb
-dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf | cefg dcbef fcge gbcadfe
-bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbgef
-egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
-gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce"""
     src = aoc_input()
     s = 0
     for l in lines(src):
         pre, post = l.split(" | ")
         outputs = post.split()
-        c = Counter(len(x) for x in outputs)
-        s += (c[2] + c[4] + c[3] + c[7])
+        s += sum(1 for c in outputs if len(c) in (2, 4, 3, 7))
 
     print(s)
 
+chars = [
+    "abcefg",
+    "cf",
+    "acdeg",
+    "acdfg",
+    "bcdf",
+    "abdfg",
+    "abdefg",
+    "acf",
+    "abcdefg",
+    "abcdfg"
+]
 
 def part2():
-    src = """be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
-edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc
-fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg
-fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega | efabcd cedba gadfec cb
-aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga | gecf egdcabf bgf bfgea
-fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf | gebdcfa ecba ca fadegcb
-dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf | cefg dcbef fcge gbcadfe
-bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbgef
-egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
-gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce"""
     src = aoc_input()
-    #src = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf"
-
-    chars = [
-        "abcefg",
-        "cf",
-        "acdeg",
-        "acdfg",
-        "bcdf",
-        "abdfg",
-        "abdefg",
-        "acf",
-        "abcdefg",
-        "abcdfg"
-    ]
-
     nums = []
     for line in lines(src):
         pre, post = line.split(" | ")
@@ -83,15 +59,24 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
                 nums.append(num)
                 break
     print(sum(nums))
-    # for l in lines(src):
-    #     print(l)
-    #     pre, post = l.split(" | ")
-    #     outputs = post.split()
-    #     c = Counter(len(x) for x in outputs)
-    #     s += (c[2] + c[4] + c[3] + c[7])
 
+
+def part2_opt():
+    def trans(count_set, output_set):
+        cnt = Counter(''.join(count_set))
+        return [tuple(sorted(cnt[c] for c in w)) for w in output_set]
+
+    trans_to_num = dict(zip(trans(chars, chars), range(10)))
+    s = 0
+    for line in lines(aoc_input()):
+        signals, outputs = line.split(' | ')
+        trans_outputs = trans(signals.split(), outputs.split())
+        num = int(''.join(str(trans_to_num[op]) for op in trans_outputs))
+        s += num
+    print(s)
 
 
 if __name__ == "__main__":
     part1()
     part2()
+    part2_opt()
