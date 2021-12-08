@@ -17,6 +17,12 @@ class Point:
     v: np.array
 
     @classmethod
+    def from_np(cls, v):
+        c = cls.__new__(cls)
+        c.v = v
+        return c
+
+    @classmethod
     def box_points(cls, p1, p2, inclusive=True):
         """Yield all points in bounded by the p1 <-> p2 box
 
@@ -34,7 +40,7 @@ class Point:
                 subs = rec(d+1)
                 for sub in subs:
                     yield (p,) + sub
-        return (Point(*p) for p in rec(0))
+        return (Point.from_np(p) for p in rec(0))
 
     @classmethod
     def line_points(cls, p1, p2, inclusive=True):
@@ -47,7 +53,7 @@ class Point:
         assert np.any(np.equal(p1.v, p2.v)) or abs(diff[0]) == abs(diff[1]), "Only straight or diagonal supported"
 
         steps = np.max(np.abs(diff.v))
-        diff = Point(*(diff.v // steps))
+        diff = Point.from_np(diff.v // steps)
         p = p1
         for _ in range(steps + int(inclusive)):
             yield p
@@ -57,17 +63,14 @@ class Point:
         yield from self.v
 
     def restrict(self, mincap:'Point' = None, maxcap:'Point' = None):
-        mincap = mincap or self.dim * [None]
-        maxcap = maxcap or self.dim * [None]
+        v = self.v
+        if mincap is not None:
+            v = np.maximum(v, mincap.v)
 
-        def minmax(a, b, c):
-            if b is not None:
-                a = max(a, b)
-            if c is not None:
-                a = min(a, c)
-            return a
+        if maxcap is not None:
+            v = np.minimum(v, maxcap.v)
 
-        return Point(*(minmax(*c) for c in zip(self.v, mincap, maxcap)))
+        return Point.from_np(v)
 
     def neighbours(self, mincap=None, maxcap=None, distance=1):
         """Get all points within offset distance (default 1)
@@ -85,10 +88,14 @@ class Point:
         self.v = np.array(args, dtype=int)
 
     def __add__(self, other):
-        return Point(*(self.v + other.v))
+        return Point.from_np(self.v + other.v)
 
     def __sub__(self, other):
-        return Point(*(self.v - other.v))
+        return Point.from_np(self.v - other.v)
+
+    def __mul__(self, scalar):
+        assert isinstance(scalar, numbers.Number)
+        return Point.from_np(self.v * scalar)
 
     def dot(self, other):
         return np.dot(self.v, other.v)
@@ -111,12 +118,12 @@ class Point:
         return len(self.v)
 
     def rot90(self, k=1):
-        # rotates the XY plane clockwise, assuming coordinates are [y, x] in v
+        # rotates the XY plane clockwise, assuming coordinates are [y, x] in v and "y increases upwards" (like a mathematical graph)
         assert self.dim == 2
         v = self.np()
         for i in range(k % 4):
             v = mat_rot90 @ v
-        return Point(*v)
+        return Point.from_np(v)
 
     def __eq__(self, other):
         return self.dim == other.dim and all(a == b for a, b in zip(self.v, other.v))

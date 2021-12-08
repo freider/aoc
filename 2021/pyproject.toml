@@ -11,6 +11,7 @@ networkx = "^2.6.3"
 pyparsing = "^3.0.6"
 pytest = "^6.2.5"
 requests = "^2.26.0"
+scipy = "^1.7.3"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.12.1"
