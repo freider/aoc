@@ -9,6 +9,7 @@ from operator import mul
 from lib.draw import draw, sparse_to_array
 import pyparsing as pp
 
+from lib.grid_2d import neighbours4
 from lib.input import aoc_input, np_map, pb_input, tokens, chunks, lines, ints
 from lib.point import Point
 
@@ -38,14 +39,13 @@ def part1():
 
 def part2():
     src = aoc_input()
-    dirs = [np.array(a) for a in [(-1, 0), (1, 0), (0, 1), (0, -1)]]
     m = np.array([[int(c) for c in w] for w in lines(src)])
 
     def rec(p, col):
         m[p] = col
-        for d in dirs:
-            t = d + p
-            if ((t >= 0) & (t < m.shape)).all() and m[tuple(t)] < 9:
+        neighbours = neighbours4(m, p)
+        for t in neighbours:
+            if m[tuple(t)] < 9:
                 rec(tuple(t), col)
 
     nextcol = 10
