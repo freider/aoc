@@ -19,24 +19,20 @@ def part1():
     m = np.vectorize(int)(np_map(src))
     total = 0
     for step in range(100):
-        m += 1
-
         def flash(p):
-            m[p] = 10
-            for _next in neighbours8(m, p):
-                next = tuple(_next)
-                if m[next] != 10:
-                    m[next] += 1
-                    if m[tuple(next)] == 10:
-                        flash(tuple(next))
+            if m[p] == 10:
+                return
+            if m[p] == 9:
+                m[p] += 1
+                for _next in neighbours8(m, p):
+                    flash(tuple(_next))
+            else:
+                m[p] += 1
 
-        mcpy = m.copy()
-        for (y, x), c in np.ndenumerate(mcpy):
-            if c == 10:
-                flash((y, x))
+        for p, c in np.ndenumerate(m):
+            flash(p)
 
-        numflash = ((m == 10)*1).sum()
-        total += numflash
+        total += (m == 10).sum()
         m[m == 10] = 0
 
     print(total)
@@ -47,24 +43,20 @@ def part2():
     m = np.vectorize(int)(np_map(src))
     total = 0
     for step in range(1, 1000000):
-        m += 1
-
         def flash(p):
-            m[p] = 10
-            for _next in neighbours8(m, p):
-                next = tuple(_next)
-                if m[next] != 10:
-                    m[next] += 1
-                    if m[tuple(next)] == 10:
-                        flash(tuple(next))
+            if m[p] == 10:
+                return
+            if m[p] == 9:
+                m[p] += 1
+                for _next in neighbours8(m, p):
+                    flash(tuple(_next))
+            else:
+                m[p] += 1
 
-        mcpy = m.copy()
-        for (y, x), c in np.ndenumerate(mcpy):
-            if c == 10:
-                flash((y, x))
+        for p, c in np.ndenumerate(m):
+            flash(p)
 
-        numflash = ((m == 10)*1).sum()
-        total += numflash
+        total += (m == 10).sum()
         m[m == 10] = 0
         if (m == 0).all():
             break
