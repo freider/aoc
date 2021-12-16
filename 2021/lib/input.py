@@ -54,8 +54,8 @@ def aoc_input(fn: Union[str, int, None] = None, year=None, nostrip=False) -> obj
         return d.rstrip("\n")
 
 
-def ints(s):
-    return [int(x) for x in re.findall(r"[+\-]?[0-9]+", s)]
+def ints(s, negative=True):
+    return [int(x) for x in re.findall(r"[+" + (r"\-" if negative else "") + "]?[0-9]+", s)]
 
 def chunks(s):
     return s.split("\n\n")
