@@ -153,7 +153,7 @@ def part1():
 -652,-548,-490
 30,-46,-14"""
 
-    #src = aoc_input()
+    src = aoc_input()
     inchunks = []
 
     for c in chunks(src):
@@ -167,17 +167,20 @@ def part1():
 
     def allrots(ps):
         for ix in permutations([0, 1, 2]):
-            for flipix in [None, 0, 1, 2]:
+            for flipmask in range(8):
+                flipmask = bin(flipmask)[2:]
+                flipmask = "0" * (3 - len(flipmask)) + flipmask
+                flipix = [-1 if c == "1" else 1 for c in flipmask]
                 rotpoints = []
                 for p, idx in ps:
-                    v = [p.np()[i] * (-1 if j == flipix else 1) for j, i in enumerate(ix)]
+                    v = [p.np()[i] * flipix[j] for j, i in enumerate(ix)]
                     rotpoints.append((Point(*v), idx))
                 norm = min(rotpoints)[0]
                 yield {p - norm: idx for p, idx in rotpoints}, [ix, flipix, norm]
 
     def rot(p, rdef):
         ix, flipix, norm = rdef
-        v = [p.np()[i] * (-1 if j == flipix else 1) for j, i in enumerate(ix)]
+        v = [p.np()[i] * flipix[j] for j, i in enumerate(ix)]
         return Point(*v) - norm
 
     def unrot(p, rdef):
@@ -185,7 +188,7 @@ def part1():
         out = [None] * 3
         unnorm = (p + norm).np()
         for i in range(3):
-            out[ix[i]] = unnorm[i] * (-1 if i == flipix else 1)
+            out[ix[i]] = unnorm[i] * flipix[i]
         return Point(*out)
 
     rotdefs = defaultdict(list)
@@ -225,6 +228,7 @@ def part1():
     print(len(set(p for cid, p in points if cid == 0)))
     print("done")
     # WA: 67
+    # WA: 202 - too low
 
 
 def part2():
