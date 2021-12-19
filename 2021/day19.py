@@ -2,6 +2,7 @@ import sys
 import re
 from collections import Counter, defaultdict
 from itertools import permutations
+from pprint import pprint
 
 import numpy as np
 import networkx as nx
@@ -169,42 +170,61 @@ def part1():
             for flipix in [None, 0, 1, 2]:
                 rotpoints = []
                 for p, idx in ps:
-                    v = [p.np()[i] * (-1 if i == flipix else 1) for i in ix]
+                    v = [p.np()[i] * (-1 if j == flipix else 1) for j, i in enumerate(ix)]
                     rotpoints.append((Point(*v), idx))
-                rotpoints.sort()
-                yield {p - rotpoints[0][0]: idx for p, idx in rotpoints}
+                norm = min(rotpoints)[0]
+                yield {p - norm: idx for p, idx in rotpoints}, [ix, flipix, norm]
 
-    samepairs = []
+    def rot(p, rdef):
+        ix, flipix, norm = rdef
+        v = [p.np()[i] * (-1 if j == flipix else 1) for j, i in enumerate(ix)]
+        return Point(*v) - norm
+
+    def unrot(p, rdef):
+        ix, flipix, norm = rdef
+        out = [None] * 3
+        unnorm = (p + norm).np()
+        for i in range(3):
+            out[ix[i]] = unnorm[i] * (-1 if i == flipix else 1)
+        return Point(*out)
+
+    rotdefs = defaultdict(list)
+    points = set()
+
     for i1, ps1 in enumerate(inchunks):
+        for p, _ in ps1:
+            points.add((i1, p))
+
         for i2, ps2 in enumerate(inchunks[i1 + 1:]):
-            for r1 in allrots(ps1):
-                for r2 in allrots(ps2):
+            chunkid2 = i1 + 1 + i2
+            for r1, rotdef in allrots(ps1):
+                for r2, rotdef2 in allrots(ps2):
                     overlap = set(r1.keys()) & set(r2.keys())
                     if len(overlap) >= 12:
-                        for k in overlap:
-                            samepairs.append((r1[k], r2[k]))
-                        print(i1, i1 + 1 + i2, 'overlap', len(overlap))
+                        print(i1, chunkid2, 'overlap', len(overlap))
+                        rotdefs[chunkid2].append((i1, rotdef, rotdef2))
+                        rotdefs[i1].append((chunkid2, rotdef2, rotdef))
                         break
                 else:
                     continue
                 break
 
-    names = {}
-    for p1, p2 in samepairs:
-        names[p1] = names[p2] = min(p1, p2)
+    pprint(rotdefs)
+    while 1:
+        didadd = False
+        for cid, p in points.copy():
+            for nextcid, r1, r2 in rotdefs[cid]:
+                new = unrot(rot(p, r2), r1)
+                if (nextcid, new) not in points:
+                    points.add((nextcid, new))
+                    didadd = True
+        if didadd:
+            continue
+        break
 
-    for i in range(len(inchunks)):
-        for k, v in names.items():
-            if v in names and names[v] != v:
-                names[k] = min(names[v], v)
-
-    uniq = set()
-    for ic in inchunks:
-        for p, n in ic:
-            uniq.add(names.get(n, n))
-
-    print(len(uniq))
-
+    print(len(set(p for cid, p in points if cid == 0)))
+    print("done")
+    # WA: 67
 
 
 def part2():
@@ -214,3 +234,17 @@ def part2():
 if __name__ == "__main__":
     part1()
     part2()
+
+#
+# def allrots(ps):
+#     for ix in permutations([0, 1, 2]):
+#         for flipmask in range(8):
+#             flipmask = bin(flipmask)[2:]
+#             flipmask = "0" * (3 - len(flipmask)) + flipmask
+#             flipix = [-1 if c == "1" else 1 for c in flipmask]
+#             rotpoints = []
+#             for p, idx in ps:
+#                 v = [p.np()[i] * flipix[j] for j, i in enumerate(ix)]
+#                 rotpoints.append((Point(*v), idx))
+#             minp = min(rotpoints)[0]
+#             yield {p - minp: idx for p, idx in rotpoints}, (ix, flipix)
