@@ -172,9 +172,7 @@ def part1():
     def allrots(ps):
         for ix in permutations([0, 1, 2]):
             for flipmask in range(8):
-                flipmask = bin(flipmask)[2:]
-                flipmask = "0" * (3 - len(flipmask)) + flipmask
-                flipix = [-1 if c == "1" else 1 for c in flipmask]
+                flipix = [-1 if c == "1" else 1 for c in f'{flipmask:3b}']
                 rotpoints = []
                 for p in ps:
                     rotpoints.append(rot(p, [ix, flipix]))
@@ -182,131 +180,37 @@ def part1():
 
     chunkmatches = []
     for chunkid1, ps1 in enumerate(inchunks):
-        m1 = set(ps1)
         for _chunkid2, ps2 in enumerate(inchunks[chunkid1 + 1:]):
             chunkid2 = chunkid1 + 1 + _chunkid2
-            found = False
             for ps2rot, rotdef in allrots(ps2):
-                for p1 in ps1:
-                    for p2 in ps2rot:
-                        trans = p1 - p2
-                        m2 = set(p + trans for p in ps2rot)
-
-                        overlap = m1 & m2
-                        if len(overlap) >= 12:
-                            print(('match', (chunkid1, chunkid2)))
-                            chunkmatches.append((chunkid1, chunkid2))
-                            found = True
-                            break
-                    if found:
+                diffs_to_points = Counter(p1 - p2 for p1 in ps1 for p2 in ps2rot)
+                for trans, n in diffs_to_points.items():
+                    if n >= 12:
+                        print('match', (chunkid1, chunkid2))
+                        chunkmatches.append((chunkid1, chunkid2))
                         break
-                if found:
-                    break
+                else:
+                    continue
+                break
     print(chunkmatches)  # intermediate cache of the heaviest lifting
-
-    # pasted cache:
-    # chunkmatches = [(0, 1), (0, 5), (0, 15), (0, 22), (1, 6), (1, 16), (1, 21), (1, 27), (2, 11), (2, 15), (2, 25), (3, 19), (4, 29), (4, 32), (5, 19), (6, 18), (7, 9), (7, 16), (8, 32), (10, 12), (10, 20), (10, 24), (12, 17), (12, 23), (13, 14), (13, 28), (14, 23), (15, 27), (15, 31), (16, 18), (17, 30), (21, 32), (22, 23), (23, 26), (27, 32), (31, 32)]
-
 
     rotdefs = defaultdict(list)
 
     for _chunkid1, _chunkid2 in chunkmatches:
         for chunkid1, chunkid2 in [(_chunkid1, _chunkid2), (_chunkid2, _chunkid1)]:
             ps1 = inchunks[chunkid1]
-            m1 = set(ps1)
             ps2 = inchunks[chunkid2]
-            found = False
             for ps2rot, rotdef in allrots(ps2):
-                for p1 in ps1:
-                    for p2 in ps2rot:
-                        trans = p1 - p2
-                        m2 = set(p + trans for p in ps2rot)
-
-                        overlap = m1 & m2
-                        if len(overlap) >= 12:
-                            print(('match', (chunkid1, chunkid2)))
-                            rotdefs[chunkid2].append((chunkid1, rotdef, trans))
-                            found = True
-                            break
-                    if found:
+                diffs_to_points = Counter(p1 - p2 for p1 in ps1 for p2 in ps2rot)
+                for trans, n in diffs_to_points.items():
+                    if n >= 12:
+                        rotdefs[chunkid2].append((chunkid1, rotdef, trans))
                         break
-                if found:
-                    break
-    pprint(rotdefs)  # cache heavy intermediate result
+                else:
+                    continue
+                break
 
-    # pasted cache:
-    # rotdefs = {0: [(1, [(2, 0, 1), [-1, 1, -1]], Point(105, -29, 1057)),
-    #                (5, [(2, 1, 0), [1, 1, -1]], Point(1153, 127, 86)),
-    #                (15, [(2, 1, 0), [-1, 1, 1]], Point(1292, 81, -88)),
-    #                (22, [(0, 1, 2), [-1, 1, -1]], Point(18, 1198, 75))],
-    #            1: [(0, [(1, 2, 0), [1, -1, -1]], Point(29, 1057, 105)),
-    #                (6, [(2, 1, 0), [1, -1, 1]], Point(63, -1114, -58)),
-    #                (16, [(0, 1, 2), [-1, 1, -1]], Point(-52, -89, -1213)),
-    #                (21, [(2, 0, 1), [-1, 1, -1]], Point(-148, -2, 1296)),
-    #                (27, [(2, 1, 0), [-1, -1, -1]], Point(-77, 49, -1085))],
-    #            2: [(11, [(2, 1, 0), [-1, -1, -1]], Point(-36, 1307, -55)),
-    #                (15, [(0, 2, 1), [-1, -1, -1]], Point(-85, -54, -1228)),
-    #                (25, [(1, 2, 0), [1, 1, 1]], Point(-12, -1202, 84))],
-    #            3: [(19, [(2, 0, 1), [1, -1, -1]], Point(39, 4, 1284))],
-    #            4: [(29, [(2, 1, 0), [-1, 1, 1]], Point(77, -176, 1218)),
-    #                (32, [(1, 0, 2), [-1, -1, -1]], Point(15, 42, 1158))],
-    #            5: [(0, [(2, 1, 0), [-1, 1, 1]], Point(86, -127, -1153)),
-    #                (19, [(2, 1, 0), [-1, -1, -1]], Point(72, 14, -1106))],
-    #            6: [(1, [(2, 1, 0), [1, -1, 1]], Point(58, -1114, -63)),
-    #                (18, [(0, 1, 2), [1, -1, -1]], Point(1270, 32, -86))],
-    #            7: [(9, [(2, 1, 0), [-1, -1, -1]], Point(-49, -104, -1115)),
-    #                (16, [(1, 0, 2), [1, -1, 1]], Point(-1176, -73, 10))],
-    #            8: [(32, [(0, 2, 1), [-1, -1, -1]], Point(1056, 67, -51))],
-    #            9: [(7, [(2, 1, 0), [-1, -1, -1]], Point(-1115, -104, -49))],
-    #            10: [(12, [(0, 1, 2), [1, -1, -1]], Point(-160, 1244, -63)),
-    #                 (20, [(1, 2, 0), [1, 1, 1]], Point(51, -18, 1119)),
-    #                 (24, [(2, 1, 0), [-1, 1, 1]], Point(-81, 1148, -158))],
-    #            11: [(2, [(2, 1, 0), [-1, -1, -1]], Point(-55, 1307, -36))],
-    #            12: [(10, [(0, 1, 2), [1, -1, -1]], Point(160, 1244, -63)),
-    #                 (17, [(1, 0, 2), [1, -1, 1]], Point(-153, -132, 1309)),
-    #                 (23, [(2, 0, 1), [1, -1, -1]], Point(62, -18, -1056))],
-    #            13: [(14, [(1, 2, 0), [1, 1, 1]], Point(85, 85, 1245)),
-    #                 (28, [(1, 2, 0), [-1, -1, 1]], Point(1156, 4, 22))],
-    #            14: [(13, [(2, 0, 1), [1, 1, 1]], Point(-1245, -85, -85)),
-    #                 (23, [(0, 2, 1), [-1, 1, 1]], Point(13, 1191, 45))],
-    #            15: [(0, [(2, 1, 0), [1, 1, -1]], Point(88, -81, 1292)),
-    #                 (2, [(0, 2, 1), [-1, -1, -1]], Point(-85, -1228, -54)),
-    #                 (27, [(1, 2, 0), [1, -1, -1]], Point(-1215, -10, 102)),
-    #                 (31, [(1, 2, 0), [1, 1, 1]], Point(-87, -1103, 27))],
-    #            16: [(1, [(0, 1, 2), [-1, 1, -1]], Point(-52, 89, -1213)),
-    #                 (7, [(1, 0, 2), [-1, 1, 1]], Point(-73, 1176, -10)),
-    #                 (18, [(2, 1, 0), [-1, 1, 1]], Point(120, 1235, 24))],
-    #            17: [(12, [(1, 0, 2), [-1, 1, 1]], Point(-132, 153, -1309)),
-    #                 (30, [(1, 2, 0), [-1, -1, 1]], Point(-21, -1176, 123))],
-    #            18: [(6, [(0, 1, 2), [1, -1, -1]], Point(-1270, 32, -86)),
-    #                 (16, [(2, 1, 0), [1, 1, -1]], Point(-24, -1235, 120))],
-    #            19: [(3, [(1, 2, 0), [-1, -1, 1]], Point(4, 1284, -39)),
-    #                 (5, [(2, 1, 0), [-1, -1, -1]], Point(-1106, 14, 72))],
-    #            20: [(10, [(2, 0, 1), [1, 1, 1]], Point(-1119, -51, 18))],
-    #            21: [(1, [(1, 2, 0), [1, -1, -1]], Point(2, 1296, -148)),
-    #                 (32, [(1, 2, 0), [-1, -1, 1]], Point(-1257, 176, 34))],
-    #            22: [(0, [(0, 1, 2), [-1, 1, -1]], Point(18, -1198, 75)),
-    #                 (23, [(1, 0, 2), [1, 1, -1]], Point(1294, 93, 63))],
-    #            23: [(12, [(1, 2, 0), [-1, -1, 1]], Point(-18, -1056, -62)),
-    #                 (14, [(0, 2, 1), [-1, 1, 1]], Point(13, -45, -1191)),
-    #                 (22, [(1, 0, 2), [1, 1, -1]], Point(-93, -1294, 63)),
-    #                 (26, [(2, 0, 1), [-1, 1, -1]], Point(1216, -76, 2))],
-    #            24: [(10, [(2, 1, 0), [1, 1, -1]], Point(158, -1148, -81))],
-    #            25: [(2, [(2, 0, 1), [1, 1, 1]], Point(-84, 12, 1202))],
-    #            26: [(23, [(1, 2, 0), [1, -1, -1]], Point(76, 2, 1216))],
-    #            27: [(1, [(2, 1, 0), [-1, -1, -1]], Point(-1085, 49, -77)),
-    #                 (15, [(2, 0, 1), [-1, 1, -1]], Point(102, 1215, -10)),
-    #                 (32, [(2, 1, 0), [1, -1, 1]], Point(-170, -1071, -37))],
-    #            28: [(13, [(2, 0, 1), [1, -1, -1]], Point(-22, 1156, 4))],
-    #            29: [(4, [(2, 1, 0), [1, 1, -1]], Point(-1218, 176, 77))],
-    #            30: [(17, [(2, 0, 1), [1, -1, -1]], Point(-123, -21, -1176))],
-    #            31: [(15, [(2, 0, 1), [1, 1, 1]], Point(-27, 87, 1103)),
-    #                 (32, [(2, 1, 0), [-1, 1, 1]], Point(-41, 42, -1165))],
-    #            32: [(4, [(1, 0, 2), [-1, -1, -1]], Point(42, 15, 1158)),
-    #                 (8, [(0, 2, 1), [-1, -1, -1]], Point(1056, -51, 67)),
-    #                 (21, [(2, 0, 1), [1, -1, -1]], Point(-34, -1257, 176)),
-    #                 (27, [(2, 1, 0), [1, -1, 1]], Point(37, -1071, 170)),
-    #                 (31, [(2, 1, 0), [1, 1, -1]], Point(1165, -42, -41))]}
+    pprint(rotdefs)  # cache heavy intermediate result
 
     points = set()
     for cid, ic in enumerate(inchunks):
