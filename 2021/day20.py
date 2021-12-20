@@ -34,9 +34,11 @@ def part1():
     ps = set()
     for (y, x), c in np.ndenumerate(m):
         if c == '#':
-            ps.add(Point(y, x))
+            ps.add((y, x))
 
     infcol = False
+
+    offsetgrid = np.mgrid[-1:2,-1:2].reshape(2, -1).T
 
     for i in range(50):
         print(i)
@@ -49,18 +51,21 @@ def part1():
             maxx = max(maxx, x)
             miny = min(miny, y)
             maxy = max(maxy, y)
+        mins = np.array([miny, minx])
+        maxs = np.array([maxy, maxx])
 
         nextpoints = set()
-        for p in Point.box_points(Point(miny - 1, minx - 1), Point(maxy + 1, maxx + 1)):
+        box_points = np.mgrid[miny-1:maxy+2, minx-1:maxx+2].reshape(2, -1).T
+        for p in box_points:
             binstring = []
-            for n in p.neighbours():
-                outside = ((n.np() < np.array([miny, minx])) | (n.np() > np.array([maxy, maxx]))).any()
-                binstring.append(str(int(n in ps or (outside and infcol))))
+            neigh = offsetgrid + p
+            for n in neigh:
+                binstring.append(str(int(tuple(n) in ps or (infcol and ((n < mins).any() or (n > maxs).any())))))
 
             b = ''.join(binstring)
             l = int(b, 2)
             if bi[l] == '#':
-                nextpoints.add(p)
+                nextpoints.add(tuple(p))
 
         if bi[0] == '#' and bi[-1] == '.':
             infcol = not infcol
