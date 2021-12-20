@@ -91,5 +91,22 @@ def test__tokens_negative():
     assert tokens("4-2", negative=True) == (4, -2)
 
 
-def np_map(txt):
-    return np.array(list(list(line.strip()) for line in txt.strip().split('\n')))
+def np_map(txt, mapper=None):
+    ret = np.array(list(list(line.strip()) for line in txt.strip().split('\n')))
+    if mapper is None:
+        return ret
+    if isinstance(mapper, dict):
+        mp = lambda x: mapper[x] if x in mapper else x
+    else:
+        mp = mapper
+    return np.vectorize(mp)(ret)
+
+
+@pytest.mark.parametrize(["input", "mapper", "expected"], [
+    ("ab\ncd", None, [["a", "b"], ["c", "d"]]),
+    ("ab\ncd", {"b": "B"}, [["a", "B"], ["c", "d"]]),
+    ("ab\ncd", lambda x: x.upper(), [["A", "B"], ["C", "D"]]),
+    ("12\n34", int, [[1, 2], [3, 4]])
+])
+def test__np_map(input, mapper, expected):
+    assert (np_map(input, mapper) == expected).all()

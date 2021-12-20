@@ -57,13 +57,12 @@ def part1():
         nextpoints = set()
         box_points = np.mgrid[miny-1:maxy+2, minx-1:maxx+2].reshape(2, -1).T
         for p in box_points:
-            binstring = []
             neigh = offsetgrid + p
+            l = 0
             for n in neigh:
-                binstring.append(str(int(tuple(n) in ps or (infcol and ((n < mins).any() or (n > maxs).any())))))
+                l *= 2
+                l += int(tuple(n) in ps or (infcol and ((n < mins).any() or (n > maxs).any())))
 
-            b = ''.join(binstring)
-            l = int(b, 2)
             if bi[l] == '#':
                 nextpoints.add(tuple(p))
 
@@ -71,9 +70,6 @@ def part1():
             infcol = not infcol
 
         ps = nextpoints
-        # print('it', i)
-        # draw(sparse_to_array({p: 1 for p in ps}), {1: '#', 0: '.'})
-
 
     print(len(ps))
 
