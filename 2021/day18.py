@@ -15,16 +15,6 @@ from lib.point import Point
 
 
 def part1():
-    src = """[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
-[[[5,[2,8]],4],[5,[[9,9],0]]]
-[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
-[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
-[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
-[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
-[[[[5,4],[7,7]],8],[[8,3],8]]
-[[9,3],[[9,9],[6,[4,9]]]]
-[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
-[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]"""
     src = aoc_input()
     nums = [eval(l) for l in lines(src)]
 
@@ -40,50 +30,46 @@ def part1():
 
     def expl(n, outer_pars):
         if isinstance(n, int):
-            return False, 0, n, 0
+            return 0, n, 0
 
         a, b = n
         if outer_pars == 4:
-            return True, a, 0, b
+            return a, 0, b
 
-        done, addleft, mid, addright = expl(a, outer_pars + 1)
-        if done:
-            return True, addleft, [mid, addfirst(b, addright)], 0
+        addleft, mid, addright = expl(a, outer_pars + 1)
+        if mid != a:
+            return addleft, [mid, addfirst(b, addright)], 0
 
-        done, addleft, mid, addright = expl(b, outer_pars + 1)
-        if done:
-            return True, 0, [addlast(a, addleft), mid], addright
+        addleft, mid, addright = expl(b, outer_pars + 1)
+        if mid != b:
+            return 0, [addlast(a, addleft), mid], addright
 
-        return False, 0, [a, b], 0
+        return 0, [a, b], 0
 
     def join(n):
         if isinstance(n, int):
             if n >= 10:
-                return True, [n // 2, (n + 1) // 2]
+                return [n // 2, (n + 1) // 2]
             else:
-                return False, n
-        ret = []
-        did = False
-        for sub in n:
-            if not did:
-                did, js = join(sub)
-            else:
-                js = sub
-            ret.append(js)
-        return did, ret
+                return n
+        ret = n.copy()
+        for i in range(len(n)):
+            ret[i] = join(n[i])
+            if ret[i] != n[i]:
+                return ret
+        return ret
 
     def red(n):
-        done = False
-        while not done:
-            done = True
-            did, left, n, right = expl(n, 0)
-            if did:
-                done = False
+        while 1:
+            left, next_n, right = expl(n, 0)
+            if next_n != n:
+                n = next_n
                 continue
-            did, n = join(n)
-            if did:
-                done = False
+            next_n = join(n)
+            if next_n != n:
+                n = next_n
                 continue
+            return n
         return n
 
     def mag(sf):
@@ -93,17 +79,74 @@ def part1():
 
     sm = reduce(lambda a, b: red([a, b]), nums)
     print(mag(sm))
-
-    mx = 0
-    for a in nums:
-        for b in nums:
-            if a != b:
-                mx = max(mag(red([a, b])), mx)
-    print(mx)
+    print(max(mag(red([a, b])) for a in nums for b in nums if a != b))
 
 
 def part2():
-    pass
+    tok = pp.Literal('[') | pp.Word(pp.nums).set_parse_action(lambda x: int(x[0])) | pp.Literal(']') | pp.Literal(',').suppress()
+    expr = pp.OneOrMore(tok)
+
+    def expl(toks):
+        c = 0
+        for i, t in enumerate(toks):
+            if t == '[':
+                c += 1
+            elif t == ']':
+                c -= 1
+            if c == 5:
+                a, b = toks[i+1:i+3]
+                p1 = toks[:i]
+                p2 = toks[i+4:]
+                for i in reversed(range(len(p1))):
+                    if isinstance(p1[i], int):
+                        p1[i] += a
+                        break
+                for i in range(len(p2)):
+                    if isinstance(p2[i], int):
+                        p2[i] += b
+                        break
+
+                return p1 + [0] + p2
+        return toks
+
+    def join(toks):
+        for i in range(len(toks)):
+            t = toks[i]
+            if isinstance(t, int) and t >= 10:
+                return toks[:i] + ['[', t // 2, (t + 1) // 2, ']'] + toks[i+1:]
+        return toks
+
+    def red(toks):
+        while 1:
+            t = expl(toks)
+            if t != toks:
+                toks = t
+                continue
+            t = join(toks)
+            if t != toks:
+                toks = t
+                continue
+
+            return toks
+
+    def mag(toks):
+        stack = []
+        for t in toks:
+            if t == ']':
+                b, a = stack.pop(), stack.pop()
+                stack.append(3 * a + 2 * b)
+            elif isinstance(t, int):
+                stack.append(t)
+        return stack[0]
+
+    src = aoc_input()
+
+    def add(a, b):
+        return red(['['] + a + b + [']'])
+
+    parsed = [list(expr.parse_string(line)) for line in lines(src)]
+    print(mag(reduce(add, parsed)))
+    print(max(mag(add(p1, p2)) for p1 in parsed for p2 in parsed if p1 != p2))
 
 
 if __name__ == "__main__":

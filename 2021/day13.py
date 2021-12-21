@@ -17,15 +17,7 @@ from lib.point import Point
 def part1():
     src = aoc_input()
     cs = chunks(src)
-    points = []
-    for l in lines(cs[0]):
-        points.append(tuple(ints(l)[::-1]))
-
-    shape = np.max(np.array(points), axis=0) + 1
-    m = np.zeros(shape, dtype=int)
-
-    for p in points:
-        m[p] = 1
+    m = sparse_to_array({tuple(ints(l))[::-1]: 1 for l in lines(cs[0])})
 
     for i, instr in enumerate(lines(cs[1])):
         val, = ints(instr)
@@ -44,24 +36,11 @@ def part1():
 
 
 def part2():
-    pass
+    cs = chunks(aoc_input())
+    print()
+
 
 
 if __name__ == "__main__":
     part1()
     part2()
-
-
-
-pic = """
-###   ##  #  # #### ###  ####   ##  ## 
-#  # #  # #  #    # #  # #       # #  #
-#  # #    ####   #  ###  ###     # #   
-###  # ## #  #  #   #  # #       # #   
-#    #  # #  # #    #  # #    #  # #  #
-#     ### #  # #### ###  #     ##   ## 
-"""
-
-msg, rem = decode_string(pic)
-print(msg)
-draw(rem, charmap={0: ' ', 1: '#'})

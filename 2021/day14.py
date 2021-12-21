@@ -10,28 +10,11 @@ from lib.draw import draw, sparse_to_array
 import pyparsing as pp
 
 from lib.input import aoc_input, np_map, pb_input, tokens, chunks, lines, ints
+from lib.numdict import numdict
 from lib.point import Point
 
 
 def part1():
-    src = """NNCB
-
-CH -> B
-HH -> N
-CB -> H
-NH -> C
-HB -> C
-HC -> B
-HN -> C
-NN -> C
-BH -> H
-NC -> B
-NB -> B
-BN -> B
-BB -> N
-BC -> B
-CC -> N
-CN -> C"""
     src = aoc_input()
     o, c2 = chunks(src)
     rules = dict(line.split(' -> ') for line in lines(c2))
@@ -52,25 +35,6 @@ CN -> C"""
 
 
 def part2():
-    src = """NNCB
-
-CH -> B
-HH -> N
-CB -> H
-NH -> C
-HB -> C
-HC -> B
-HN -> C
-NN -> C
-BH -> H
-NC -> B
-NB -> B
-BN -> B
-BB -> N
-BC -> B
-CC -> N
-CN -> C"""
-
     src = aoc_input()
     o, c2 = chunks(src)
     rules = dict(line.split(' -> ') for line in lines(c2))
@@ -78,31 +42,21 @@ CN -> C"""
     def expand(pair):
         a, c = pair
         b = rules[pair]
-        return ({
+        return numdict({
             a + b: 1,
             b + c: 1
         })
 
-    def add(p1, p2):
-        keys = set(p1.keys()) | set(p2.keys())
-        return {
-            k: p1.get(k, 0) + p2.get(k, 0)
-            for k in keys
-        }
-
-    def mul(p1, n):
-        return {k: v * n for k, v in p1.items()}
-
-    pol = {}
+    pol = numdict()
     for j in range(1, len(o)):
-        pol = add(pol, {o[j-1:j+1]: 1})
+        pol = pol + {o[j-1:j+1]: 1}
 
     def rec(p, steps):
         if steps == 0:
             return p
-        out = {}
+        out = numdict()
         for pair, cnt in p.items():
-            out = add(out, mul(expand(pair), cnt))
+            out = out + expand(pair) * cnt
         return rec(out, steps - 1)
 
     fin = rec(pol, 40)
