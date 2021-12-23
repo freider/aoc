@@ -91,8 +91,9 @@ def test__tokens_negative():
     assert tokens("4-2", negative=True) == (4, -2)
 
 
-def np_map(txt, mapper=None):
-    ret = np.array(list(list(line.strip()) for line in txt.strip().split('\n')))
+def np_map(txt, mapper=None, strip=True):
+    stripper = lambda x: x.strip() if strip else x
+    ret = np.array(list(list(stripper(line)) for line in txt.strip('\n').split('\n')))
     if mapper is None:
         return ret
     if isinstance(mapper, dict):

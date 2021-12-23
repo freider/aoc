@@ -1,5 +1,7 @@
 import sys
 import re
+from collections import Counter
+
 import numpy as np
 import networkx as nx
 from functools import reduce
@@ -10,63 +12,37 @@ import pyparsing as pp
 from lib.input import aoc_input, np_map, pb_input, tokens
 
 
-def dec(s):
-    r = 0
-    for c in s:
-        r *= 2
-        r += c
-    return r
-
 def part1():
-    lines = aoc_input().strip().split('\n')
-    a = []
-    b = []
-
-    for i in range(len(lines[0])):
-        z = sum(l[i] == "0" for l in lines)
-        o = len(lines) - z
-
-        if z > o:
-            a.append(0)
-            b.append(1)
-        else:
-            a.append(1)
-            b.append(0)
-
-    print(dec(a) * dec(b))
+    m = np_map(aoc_input(), int)
+    b = ''.join(str(x) for x in (np.argmax(np.bincount(a)) for a in m.T))
+    a = ''.join(str(x) for x in (np.argmin(np.bincount(a)) for a in m.T))
+    print(int(b, 2) * int(a, 2))
 
 
 def part2():
-    olines = aoc_input().strip().split('\n')
-    lines = [l for l in olines]
+    src = """00100
+11110
+10110
+10111
+10101
+01111
+00111
+11100
+10000
+11001
+00010
+01010"""
+    #src = aoc_input()
+    m = np_map(src, int)
+    n = m.copy()
+    for i in range(m.shape[1]):
+        m = m[m[:, i] == np.argmax(np.bincount(m[:, i]))]
+        n = n[n[:, i] == np.argmin(np.bincount(n[:, i]))]
 
-    for i in range(len(lines[0])):
-        if len(lines) == 1:
-            break
-        z = sum(l[i] == "0" for l in lines)
-        o = len(lines) - z
+    print(m)
+    print(n)
 
-        if z > o:
-            lines = [l for l in lines if l[i] == "0"]
-        else:
-            lines = [l for l in lines if l[i] == "1"]
 
-    a = [int(x) for x in lines[0]]
-
-    lines = [l for l in olines]
-    for i in range(len(lines[0])):
-        if len(lines) == 1:
-            break
-        z = sum(l[i] == "0" for l in lines)
-        o = len(lines) - z
-
-        if z > o:
-            lines = [l for l in lines if l[i] == "1"]
-        else:
-            lines = [l for l in lines if l[i] == "0"]
-
-    b = [int(x) for x in lines[0]]
-    print(dec(a) * dec(b))
 
 
 
