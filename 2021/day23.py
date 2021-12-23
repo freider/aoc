@@ -34,7 +34,7 @@ movecosts = {
 entrypoints = [2, 4, 6, 8]
 
 def est(state):
-    rooms = state[1]
+    hallway, rooms = state
     tot = 0
     for i, room in enumerate(rooms):
         current_x = entrypoints[i]
@@ -44,6 +44,11 @@ def est(state):
                 target_x = entrypoints[ord(c) - ord('A')]
                 if target_x != current_x:
                     tot += movecosts[c] * (abs(target_x - current_x) + depth + 2)
+    for x, c in enumerate(hallway):
+        if c != '.':
+            target_x = entrypoints[ord(c) - ord('A')]
+            tot += movecosts[c] * (abs(target_x - x) + 1)
+
     return tot
 
 
@@ -51,6 +56,8 @@ def part1():
     src = """#############
 #...........#
 ###C#A#B#D###
+  #D#C#B#A#  
+  #D#B#A#C#  
   #B#A#D#C#  
   #########  """
     m = np_map(src, strip=False)
@@ -66,6 +73,8 @@ def part1():
 #...........#
 ###A#B#C#D###
   #A#B#C#D#  
+  #A#B#C#D#  
+  #A#B#C#D#  
   #########  """, strip=False))
 
     print(est(target))
@@ -74,9 +83,12 @@ def part1():
     ]
     best = {}
     best[totup(state(m))] = 0
-
+    vis = set()
     while q:
         costest, state = heapq.heappop(q)
+        if state in vis:
+            continue
+        vis.add(state)
         cost = best[state]
         (hallway, rooms) = tonp(state)
         #print('visiting', hallway, rooms)
@@ -100,14 +112,6 @@ def part1():
                         newhall = hallway.copy()
                         newhall[hi] = '.'
                         newrooms = rooms.copy()
-
-                        # if rooms[room_index, 1] == '.':
-                        #     extra_step = 2
-                        #     newrooms[room_index, 1] = c
-                        # else:
-                        #     extra_step = 1
-                        #     newrooms[room_index, 0] = c
-
                         extra_step = 0
                         for i, rc in enumerate(rooms[room_index]):
                             if rc == '.':
