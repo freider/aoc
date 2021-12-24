@@ -136,6 +136,22 @@ def part1():
                         for mx in range(len(hallway)):
                             if mx in entrypoints:
                                 continue
+                            badx = False
+                            for room_i2, room2 in enumerate(rooms):
+                                for depth2, c2 in enumerate(room2):
+                                    if room_i2 == room_i and depth == depth2:
+                                        continue
+                                    if c2 != '.':
+                                        curx2 = entrypoints[room_i2]
+                                        destx = entrypoints[ord(c2) - ord('A')]
+                                        a, b = sorted([curx2, destx])
+                                        if a < mx < b:
+                                            badx = True
+                                            break
+                                if badx:
+                                    break
+                            if badx:
+                                continue
 
                             a, b = sorted([currx, mx])
                             if (hallway[a:b+1] == '.').all():
