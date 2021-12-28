@@ -237,10 +237,6 @@ off x=-70369..-16548,y=22648..78696,z=-1892..86821
 on x=-53470..21291,y=-120233..-33476,z=-44150..38147
 off x=-93533..-4276,y=-16170..68771,z=-104985..-24507"""
 
-#     src = """on 3 6 3 6 3 6
-# off 2 5 2 5 2 5
-# on 1 3 1 3 1 3
-# off 1 2 1 2 1 2"""
     # src = aoc_input()
     axi_vals = [set() for _ in range(3)]
 
@@ -248,71 +244,33 @@ off x=-93533..-4276,y=-16170..68771,z=-104985..-24507"""
 
     for it, line in enumerate(lines(src)):
         n = np.array(ints(line, negative=True))
-        if not ((n >= -50) & (n <= 50)).all():
-            continue
         state = line.startswith("on")
-        p1 = [n[0], n[2], n[4]]
-        p2 = [n[1], n[3], n[5]]
-        boxes.append((np.array(p1), np.array(p2), state))
+        p1 = np.array([n[0], n[2], n[4]])
+        p2 = np.array([n[1], n[3], n[5]]) + 1
+        boxes.append((p1, p2, state))
         for i in range(3):
             axi_vals[i] |= {p1[i], p2[i]}
+
+    def pointstate(x, y, z):
+        for b1, b2, s in reversed(boxes):
+            if (b1 <= [x, y, z]).all() and (b2 > [x, y, z]).all():
+                return s
+        return False
 
     sorted_vals = [
         sorted(v)
         for v in axi_vals
     ]
-    for sv in sorted_vals:
-        sv.append(sv[-1] + 1)
-
-    def pointstate(p):
-        for b1, b2, s in reversed(boxes):
-            if (p >= b1).all() and (p <= b2).all():
-                return s
-        return False
-
     res = 0
     print([len(sorted_vals[i]) for i in range(3)])
     for it1, (x1, x2) in enumerate(pairs(sorted_vals[0])):
-        print(it1)
+        rem = [(b1, b2) for (b1, b2) in boxes if b1[0] <= x1 < b2[0]]
         for y1, y2 in pairs(sorted_vals[1]):
+            rem = [(b1, b2) for (b1, b2) in rem if b1[1] <= x1 < b2[1]]
             for z1, z2 in pairs(sorted_vals[2]):
-                p1 = np.array([x1, y1, z1])
-                p2 = np.array([x2, y2, z2])
-                # add inner
-                if ((p1 + 1) < p2).all():
-                    #print("checking pointstate", p1 + 1, pointstate(p1 + 1))
-                    if pointstate(p1 + 1):
-                        #print('inner', np.prod(p2 - p1 - 1))
-                        res += np.prod(p2 - p1 - 1)
-                # 3 surfaces
-                for i in range(3):
-                    #  keep axis i constant
-                    prod = 1
-                    for j in range(3):
-                        if i != j:
-                            if p1[j] + 1 >= p2[j]:
-                                break
-                            prod *= p2[j] - p1[j] - 1
-                    else:
-                        surpoint = p1 + 1
-                        surpoint[i] -= 1
-                        if pointstate(surpoint):
-                            #print("surface", prod)
-                            res += prod
-
-                # 3 edges
-                for i in range(3):
-                    #  keep axis i floating
-                    if p1[i] + 1 < p2[i]:
-                        edgelen = p2[i] - p1[i] - 1
-                        surpoint = p1.copy()
-                        surpoint[i] += 1
-                        if pointstate(surpoint):
-                            #print("edge", edgelen)
-                            res += edgelen
-
-                # 1 corners
-                res += int(pointstate(np.array([x1, y1, z1])))
+                rem = [(b1, b2) for (b1, b2) in rem if b1[2] <= x1 < b2[2]]
+                #if pointstate(x1, y1, z1):
+                res += (x2 - x1) * (y2 - y1) * (z2 - z1)
 
     print(res)
     #print(2758514936282235)
@@ -469,4 +427,5 @@ off x=-93533..-4276,y=-16170..68771,z=-104985..-24507"""
 
 if __name__ == "__main__":
     #part1()
-    part2()
+    part2_slow_but_working()
+    #part2()
