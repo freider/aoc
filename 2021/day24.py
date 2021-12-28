@@ -53,7 +53,7 @@ def part1():
                 print('So close', lastz)
 
         a, b, d = chunknums[groupi]
-        for w in range(1, 10):
+        for w in range(1, 10):  # <-- this is for part2. Add reversed() around the range to get part1 solution
             xval = lastz % 26 + a != w
             tz = lastz // d
             newz = tz + xval * (25 * tz + w + b)
