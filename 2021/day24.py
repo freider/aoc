@@ -32,8 +32,8 @@ def part1():
                 b = nums[0]
         chunknums.append((a, b, d))
 
-    print([d for _, _, d in chunknums])
-    return
+    print("constants", [d for _, _, d in chunknums])
+    
     # w = inp
     # x = (z % 26 + a) != w
     # z = z // d + x(25(z//d) + w + b)
@@ -63,10 +63,6 @@ def part1():
                     return res
 
     print(''.join(str(x) for x in rec(0, [], 0)))
-
-
-# i3 == 6, 7, 8, 9
-
 
 
 
