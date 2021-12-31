@@ -11,6 +11,7 @@ import pyparsing as pp
 
 from lib.input import aoc_input, np_map, pb_input, tokens, chunks, lines, ints
 from lib.point import Point
+import heapq
 
 
 def part1():
@@ -41,6 +42,24 @@ def box_corners(bounds):
             for k in range(2):
                 yield np.array([inner[0,i], inner[1, j], inner[2, k]])
                 
+def bdist(bounds):
+    return min(getdist(p) for p in box_corners(bounds))
+
+def get_num_intersects(bounds, oktas):
+    for okta in oktas:
+        for o_corner in okta_corners(okta):
+            if (o_corner >= bounds[:, 0]).all() and (o_corner < bounds[:, 1]).all():
+                yield okta
+                break
+        else:
+            for b_corner in box_corners(bounds):
+                if np.abs(okta[:3] - b_corner).sum() <= okta[3]:
+                    yield okta
+                    break
+
+def getdist(p):
+    return np.abs(p).sum()
+
 
 def part2():
     src = """pos=<10,12,12>, r=2
@@ -59,37 +78,12 @@ pos=<10,10,10>, r=5"""
     maxbounds = np.stack((mins, maxs), axis=1)[:3]
     max_dist = np.abs(maxbounds[:, 1]).sum()
 
-    def get_num_intersects(bounds, oktas):
-        for okta in oktas:
-            for o_corner in okta_corners(okta):
-                if (o_corner >= bounds[:, 0]).all() and (o_corner < bounds[:, 1]).all():
-                    yield okta
-                    break
-            else:
-                for b_corner in box_corners(bounds):
-                    if np.abs(okta[:3] - b_corner).sum() <= okta[3]:
-                        yield okta
-                        break
 
-    def getdist(p):
-        return np.abs(p).sum()
+    q = []
+    boxcount = [0]
 
-    def bestpoint(nint, bounds, closer_than, oktas):
-        size = bounds[:, 1] - bounds[:, 0]
-        if (size <= 0).any():
-            return None, None
-        
-        intersected = list(get_num_intersects(bounds, oktas))
-        if len(intersected) < nint:
-            return None, None
-    
-        if (size == 1).all():
-            print(bounds[:,0], closer_than, nint, len(oktas), min(getdist(p) for p in box_corners(bounds)))
-            p = bounds[:,0]
-            return getdist(p), p
-        
+    def expand(bounds):
         # subdivide bounds into 8 sub cubes
-        subboxes = []
         mid = (bounds[:,0] + bounds[:,1]) // 2
         allbounds = np.stack((bounds[:,0], mid, bounds[:,1]), axis=1)
 
@@ -97,35 +91,28 @@ pos=<10,10,10>, r=5"""
             for yd in range(2):
                 for zd in range(2):
                     subbox = np.array([allbounds[i, half:half+2] for i, half in enumerate([xd, yd, zd])])
-                    boxdist = min(getdist(p) for p in box_corners(subbox))
-                    subboxes.append((boxdist, len(subboxes), subbox))
+                    size = subbox[:, 1] - subbox[:, 0]
+                    if (size <= 0).any():
+                        continue
+                    num_intersected = sum(1 for _ in get_num_intersects(subbox, oktas))
+                    if num_intersected == 0:
+                        continue
+                    boxdist = bdist(subbox)
+                    heapq.heappush(q, (-num_intersected, boxdist, boxcount[0], subbox))
+                    boxcount[0] += 1
 
-        best_dist = closer_than
-        best_p = None
-        for boxdist, _, subbox in sorted(subboxes):
-            if boxdist >= best_dist:
-                continue
-            dist, p = bestpoint(nint, subbox, best_dist, intersected)
-            if p is not None:
-                if dist < best_dist:
-                    best_dist = dist
-                    best_p = p
-        return best_dist, best_p
 
-    lb = 0 # tested to work
-    ub = len(oktas) + 1 # tested to not work
-    while lb < ub - 1:
-        t = (ub + lb + 1) // 2
-        d, p = bestpoint(t, maxbounds, max_dist, oktas)
-        print(t, d, p)
-        if p is None:
-            # lower the bound
-            ub = t
-        else:
-            lb = t
+    q.append((-len(oktas), max_dist, 0, maxbounds))
+    boxcount[0] += 1
 
-    print("num overlaps", lb)
-    print(bestpoint(lb, maxbounds, max_dist))
+    while q:
+        invint, dist, _, bounds = heapq.heappop(q)
+        print(len(q), invint, dist)
+        if ((bounds[:, 1] - bounds[:, 0]) == 1).all():
+            print("Done", -invint, dist, bounds)
+            break
+        
+        expand(bounds)
 
 
 
