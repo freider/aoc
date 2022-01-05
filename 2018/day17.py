@@ -14,15 +14,6 @@ from lib.point import Point
 
 
 def part1():
-    src = """x=495, y=2..7
-y=7, x=495..501
-x=501, y=3..7
-x=498, y=2..4
-x=506, y=1..2
-x=498, y=10..13
-x=504, y=10..13
-y=13, x=498..504"""
-    #
     src = aoc_input()
     obst = set()
     for line in lines(src):
@@ -62,24 +53,6 @@ y=13, x=498..504"""
         img.save(tfile)
         print(tfile.name)
         input()
-
-    def draw():
-        minx = min(p[1] for p in obst)
-        maxx = max(p[1] for p in obst)
-        for y in range(0, maxy + 1):
-            row = []
-            for x in range(minx, maxx + 1):
-                p = Point(y, x)
-                c = "."
-                if p in obst:
-                    c = '#'
-                elif p in everblue:
-                    c = '~'
-                elif p in water:
-                    c = '|'
-                row.append(c)
-            print(''.join(row))
-        print()
 
     def flowdown(p):
         while 1:
@@ -125,10 +98,9 @@ y=13, x=498..504"""
 
     source = (Point(0, 500))
     flowdown(source)
-    print(min(p[0] for p in water))
     #drawpil()
-    print(sum(1 for p in water if p[0] >= miny)) # toohigh: 38453
-    print(len(everblue))
+    print(sum(1 for p in water if p[0] >= miny))  # part 1
+    print(len(everblue)) # part 2
 
 def part2():
     pass
